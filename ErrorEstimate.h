@@ -41,19 +41,23 @@
 #include "defs.h"
 #include "LongFloat.h"
 
-namespace RealLib {
+namespace RealLib
+{
 
-class ErrorEstimate {
-public:
-    u32 m_Man;      // >= 2^31
-    i32 m_Exp;      // error = m_Man * 2 ^ (m_Exp - 32)
+class ErrorEstimate
+{
+  public:
+    u32 m_Man; // >= 2^31
+    i32 m_Exp; // error = m_Man * 2 ^ (m_Exp - 32)
 
-    enum Inf { minusinf = -I32_MAX, plusinf = I32_MAX } ;
+    enum Inf { minusinf = -I32_MAX, plusinf = I32_MAX };
     enum RoundingMode { Down = 0, Up = 1 };
 
     static inline i32 exp_saturated(exp_type a)
-    {    a = a < plusinf ? a : plusinf - 1;
-    return i32(a > minusinf ? a : minusinf + 1); }
+    {
+        a = a < plusinf ? a : plusinf - 1;
+        return i32(a > minusinf ? a : minusinf + 1);
+    }
 
     explicit ErrorEstimate(const u32 man = 0, const i32 exp = 0);
     // conversions (rounding up)
@@ -66,33 +70,34 @@ public:
 
     // operations
     // round-up addition
-    ErrorEstimate operator + (const ErrorEstimate &rhs) const;
+    ErrorEstimate operator+(const ErrorEstimate &rhs) const;
     // round-down substraction
-    ErrorEstimate operator - (const ErrorEstimate &rhs) const;
+    ErrorEstimate operator-(const ErrorEstimate &rhs) const;
     // round-up multiplication
-    ErrorEstimate operator * (const ErrorEstimate &rhs) const;
+    ErrorEstimate operator*(const ErrorEstimate &rhs) const;
     // round-up reciprocal
     ErrorEstimate recip() const;
     // round-up division
-    ErrorEstimate operator / (const ErrorEstimate &rhs) const
-               { return *this * rhs.recip(); }
+    ErrorEstimate operator/(const ErrorEstimate &rhs) const
+    {
+        return *this * rhs.recip();
+    }
     // round-up <<
-    ErrorEstimate operator << (i32 howmuch) const;  // shift left in bits
+    ErrorEstimate operator<<(i32 howmuch) const; // shift left in bits
 
     // comparisons
-    bool operator >= (const ErrorEstimate &rhs) const;
-    bool operator > (const ErrorEstimate &rhs) const;
+    bool operator>=(const ErrorEstimate &rhs) const;
+    bool operator>(const ErrorEstimate &rhs) const;
 
-    ErrorEstimate& operator ++ ();  // add the minimum
+    ErrorEstimate &operator++(); // add the minimum
 
     // conversions
     double AsDouble() const;
     LongFloat AsLongFloat() const;
-
 };
 
 // two needed operations
-ErrorEstimate max(const ErrorEstimate &a, const ErrorEstimate &b); 
+ErrorEstimate max(const ErrorEstimate &a, const ErrorEstimate &b);
 ErrorEstimate min(const ErrorEstimate &a, const ErrorEstimate &b);
 
 ErrorEstimate RoundingError(const LongFloat &lf, i32 re);

@@ -19,139 +19,91 @@
 #include <iomanip>
 #include "MachineEstimate.h"
 
-namespace RealLib {
+namespace RealLib
+{
 
 double MachineEstimate::plusinf = 0.0;
 double MachineEstimate::minusinf = 0.0;
 double MachineEstimate::OnePEps = 1.0;
 double MachineEstimate::OneMEps = 1.0;
 
-static u32 ConstsLong[172] =
-{
+static u32 ConstsLong[172] = {
 #define CONSTS_COS 0
-        0x00000001, 0x3ff00000, // coeff[0] rounded up
-        0xffffffff, 0x3fefffff, // coeff[0] rounded down
-        0x418cafdb, 0x40018bc4, // coeff[1], exact
-        0x9e3185f6, 0x3fe9a7b2, // coeff[2], exact
-        0x5d05165d, 0x3fbe0270,
-        0xa8e30653, 0x3f82ce22,
-        0x70426553, 0x3f3d5450,
-        0x749f656f, 0x3eef2edc,
-        0x44c498c8, 0x3e979e4b,
+  0x00000001, 0x3ff00000, // coeff[0] rounded up
+  0xffffffff, 0x3fefffff, // coeff[0] rounded down
+  0x418cafdb, 0x40018bc4, // coeff[1], exact
+  0x9e3185f6, 0x3fe9a7b2, // coeff[2], exact
+  0x5d05165d, 0x3fbe0270, 0xa8e30653, 0x3f82ce22, 0x70426553, 0x3f3d5450, 0x749f656f,
+  0x3eef2edc, 0x44c498c8, 0x3e979e4b,
 #define CONSTS_RPI4 9
-        // 1/(Pi*4), multiplication constant
-        0x6dc9c883, 0x3fb45f30,
-        0x6dc9c882, 0x3fb45f30,
-#define CONSTS_PI    11
-        // Pi, proper interval
-        0x54442d19, 0x400921fb,
-        0x54442d18, 0x400921fb,
+  // 1/(Pi*4), multiplication constant
+  0x6dc9c883, 0x3fb45f30, 0x6dc9c882, 0x3fb45f30,
+#define CONSTS_PI 11
+  // Pi, proper interval
+  0x54442d19, 0x400921fb, 0x54442d18, 0x400921fb,
 #define CONSTS_SIN 13
-        0x382d7366, 0x4000c152,
-        0x382d7365, 0x4000c152,
-        0x791049dc, 0x3ff87fb0,
-        0x3ea3fdb3, 0x3fd57e24,
-        0x23972846, 0x3fa1f529,
-        0x62748c9e, 0x3f618133,
-        0x4e962080, 0x3f165652,
-        0xe58a04cb, 0x3ec4189c,
-        0x3772c742, 0x3e6a705b,
+  0x382d7366, 0x4000c152, 0x382d7365, 0x4000c152, 0x791049dc, 0x3ff87fb0, 0x3ea3fdb3,
+  0x3fd57e24, 0x23972846, 0x3fa1f529, 0x62748c9e, 0x3f618133, 0x4e962080, 0x3f165652,
+  0xe58a04cb, 0x3ec4189c, 0x3772c742, 0x3e6a705b,
 #define CONSTS_EXPMASK 22
-        0x00000000, 0x7ff00000,
+  0x00000000, 0x7ff00000,
 #define CONSTS_EXPBIAS 23
-        0x00000000, 0x3fe00000,
+  0x00000000, 0x3fe00000,
 #define CONSTS_LOG 24
-        0xed268e66, 0x3ca3df51,
-        0xb100afab, 0xbc2dcabb,
-        0x00000004, 0x3ff00000,
-        0xffffeeea, 0x3fdfffff,
-        0x55550aa6, 0x3fd55555,
-        0x002a2505, 0x3fd00000,
-        0x9a79b04d, 0x3fc99999,
-        0x0771c502, 0x3fc55555,
-        0xfc94cb71, 0x3fc24923,
-        0x35ec7035, 0x3fc00022,
-        0x9d9f4587, 0x3fbc722e,
-        0xab47707f, 0x3fb98a39,
-        0xb4029d62, 0x3fb73291,
-        0x0deb07e2, 0x3fb7085a,
-        0xa63cf31c, 0x3fb582e2,
+  0xed268e66, 0x3ca3df51, 0xb100afab, 0xbc2dcabb, 0x00000004, 0x3ff00000, 0xffffeeea,
+  0x3fdfffff, 0x55550aa6, 0x3fd55555, 0x002a2505, 0x3fd00000, 0x9a79b04d, 0x3fc99999,
+  0x0771c502, 0x3fc55555, 0xfc94cb71, 0x3fc24923, 0x35ec7035, 0x3fc00022, 0x9d9f4587,
+  0x3fbc722e, 0xab47707f, 0x3fb98a39, 0xb4029d62, 0x3fb73291, 0x0deb07e2, 0x3fb7085a,
+  0xa63cf31c, 0x3fb582e2,
 #define CONSTS_SQRTSQRT2 39
-        0xa31b716, 0x3ff306fe,
-        0xa31b715, 0x3ff306fe,
-#define CONSTS_LN2    41
-        0xfefa39f0, 0x3fe62e42,
-        0xfefa39ef, 0x3fe62e42,
-#define CONSTS_LN2C    43
-        0xfefa39f0, 0x3fe62e42,
-        0xfefa39ef, 0x3fe62e42,
+  0xa31b716, 0x3ff306fe, 0xa31b715, 0x3ff306fe,
+#define CONSTS_LN2 41
+  0xfefa39f0, 0x3fe62e42, 0xfefa39ef, 0x3fe62e42,
+#define CONSTS_LN2C 43
+  0xfefa39f0, 0x3fe62e42, 0xfefa39ef, 0x3fe62e42,
 #define CONSTS_LOG2E 45
-        0x652b82ff, 0x3ff71547,
-        0x652b82fe, 0x3ff71547,
+  0x652b82ff, 0x3ff71547, 0x652b82fe, 0x3ff71547,
 #define CONSTS_SIGN 47
-        0x00000000, 0x80000000,
+  0x00000000, 0x80000000,
 #define CONSTS_EXPLIMIT 48
-        0x0, 0x408ff000,
+  0x0, 0x408ff000,
 #define CONSTS_EXP 49
-        0x00000001, 0x40000000,
-        0xffffffff, 0x3fffffff,
-        0xfefa39f9, 0x3ff62e42,
-        0xff82bdb1, 0x3fdebfbd,
-        0xd706fa97, 0x3fbc6b08,
-        0x6f5ef210, 0x3f93b2ab,
-        0xf7c7e6fd, 0x3f65d87f,
-        0x5d0bd9c1, 0x3f34308f,
-        0x722cb340, 0x3efffd04,
-        0x43ec690a, 0x3ec628a6,
-        0xab63f5ed, 0x3e8b898b,
-        0xdf1599b6, 0x3e4c140c,
-        0xc4fc16f9, 0x3e15a8b6,
+  0x00000001, 0x40000000, 0xffffffff, 0x3fffffff, 0xfefa39f9, 0x3ff62e42, 0xff82bdb1,
+  0x3fdebfbd, 0xd706fa97, 0x3fbc6b08, 0x6f5ef210, 0x3f93b2ab, 0xf7c7e6fd, 0x3f65d87f,
+  0x5d0bd9c1, 0x3f34308f, 0x722cb340, 0x3efffd04, 0x43ec690a, 0x3ec628a6, 0xab63f5ed,
+  0x3e8b898b, 0xdf1599b6, 0x3e4c140c, 0xc4fc16f9, 0x3e15a8b6,
 #define CONSTS_ATAN 62
-        0x00000001, 0x3ff00000,
-        0xffffffff, 0x3fefffff,
-        0x555553d2, 0xbfd55555,
-        0x9998037a, 0x3fc99999,
-        0x91f33a63, 0xbfc24924,
-        0x09057800, 0x3fbc71c7,
-        0x1aa24579, 0xbfb745d0,
-        0xf9b84bf5, 0x3fb3b12a,
-        0x01a930e2, 0xbfb11089,
-        0x556e5d85, 0x3fae177e,
-        0xa80e2f1b, 0xbfaad32f,
-        0xa58c31d6, 0x3fa7ee71,
-        0x8b0ccaa5, 0xbfa4f50b,
-        0x6c6308fe, 0x3fa17309,
-        0x2b4c52ee, 0xbf9a77d1,
-        0x7e19f3dd, 0x3f916913,
-        0xfa32033c, 0xbf82da21,
-        0xd33c5aff, 0x3f6fb050,
-        0x6bed862f, 0xbf532726,
-        0x510269d4, 0x3f2d637e,
-        0x64cd132e, 0xbef5619e,
-#define CONSTS_SQRT2    83
-        // sqrt(2), mult. constant
-        0x667f3bcd, 0x3ff6a09e,
-        0x667f3bcc, 0x3ff6a09e,
-#define CONSTS_PI2    85
-        // Pi*2 rounded up
-        0x54442d19, 0x402921fb
-};
+  0x00000001, 0x3ff00000, 0xffffffff, 0x3fefffff, 0x555553d2, 0xbfd55555, 0x9998037a,
+  0x3fc99999, 0x91f33a63, 0xbfc24924, 0x09057800, 0x3fbc71c7, 0x1aa24579, 0xbfb745d0,
+  0xf9b84bf5, 0x3fb3b12a, 0x01a930e2, 0xbfb11089, 0x556e5d85, 0x3fae177e, 0xa80e2f1b,
+  0xbfaad32f, 0xa58c31d6, 0x3fa7ee71, 0x8b0ccaa5, 0xbfa4f50b, 0x6c6308fe, 0x3fa17309,
+  0x2b4c52ee, 0xbf9a77d1, 0x7e19f3dd, 0x3f916913, 0xfa32033c, 0xbf82da21, 0xd33c5aff,
+  0x3f6fb050, 0x6bed862f, 0xbf532726, 0x510269d4, 0x3f2d637e, 0x64cd132e, 0xbef5619e,
+#define CONSTS_SQRT2 83
+  // sqrt(2), mult. constant
+  0x667f3bcd, 0x3ff6a09e, 0x667f3bcc, 0x3ff6a09e,
+#define CONSTS_PI2 85
+  // Pi*2 rounded up
+  0x54442d19, 0x402921fb};
 
-static const double *Consts = (double*)(ConstsLong);
+static const double *Consts = (double *)(ConstsLong);
 static const double *CosConsts = Consts + CONSTS_COS;
 static const double *SinConsts = Consts + CONSTS_SIN;
 static const double *LogConsts = Consts + CONSTS_LOG;
 static const double *ExpConsts = Consts + CONSTS_EXP;
 static const double *AtanConsts = Consts + CONSTS_ATAN;
-static const MachineEstimate me_rpi4(Consts[CONSTS_RPI4+1], Consts[CONSTS_RPI4]);
-static const MachineEstimate me_pi_over_2(Consts[CONSTS_PI+1]*0.5, Consts[CONSTS_PI]*0.5);
-static const MachineEstimate me_pi_over_4(Consts[CONSTS_PI+1]*0.25, Consts[CONSTS_PI]*0.25);
-static const MachineEstimate me_pi(Consts[CONSTS_PI+1], Consts[CONSTS_PI]);
-static const MachineEstimate me_ln2(Consts[CONSTS_LN2+1], Consts[CONSTS_LN2]);
+static const MachineEstimate me_rpi4(Consts[CONSTS_RPI4 + 1], Consts[CONSTS_RPI4]);
+static const MachineEstimate me_pi_over_2(Consts[CONSTS_PI + 1] * 0.5,
+                                          Consts[CONSTS_PI] * 0.5);
+static const MachineEstimate me_pi_over_4(Consts[CONSTS_PI + 1] * 0.25,
+                                          Consts[CONSTS_PI] * 0.25);
+static const MachineEstimate me_pi(Consts[CONSTS_PI + 1], Consts[CONSTS_PI]);
+static const MachineEstimate me_ln2(Consts[CONSTS_LN2 + 1], Consts[CONSTS_LN2]);
 static const double &me_upped_pi2 = Consts[CONSTS_PI2];
-static const MachineEstimate me_sqrt_2(Consts[CONSTS_SQRT2+1], Consts[CONSTS_SQRT2]);
-static const MachineEstimate me_sqrt_sqrt_2(Consts[CONSTS_SQRTSQRT2+1], Consts[CONSTS_SQRTSQRT2]);
-static const MachineEstimate me_log2e(Consts[CONSTS_LOG2E+1], Consts[CONSTS_LOG2E]);
+static const MachineEstimate me_sqrt_2(Consts[CONSTS_SQRT2 + 1], Consts[CONSTS_SQRT2]);
+static const MachineEstimate me_sqrt_sqrt_2(Consts[CONSTS_SQRTSQRT2 + 1],
+                                            Consts[CONSTS_SQRTSQRT2]);
+static const MachineEstimate me_log2e(Consts[CONSTS_LOG2E + 1], Consts[CONSTS_LOG2E]);
 
 #ifdef _MSC_VER
 #define nextafter _nextafter
@@ -159,29 +111,28 @@ static const MachineEstimate me_log2e(Consts[CONSTS_LOG2E+1], Consts[CONSTS_LOG2
 
 // one positive and one negative multiple, positive result of the addition
 // treating the elements separately
-MachineEstimate AddProductPosNeg(const MachineEstimate add, const MachineEstimate &pos, double neg) 
+MachineEstimate AddProductPosNeg(const MachineEstimate add, const MachineEstimate &pos,
+                                 double neg)
 {
-    return MachineEstimate(
-            MachineEstimate::RoundToZero(add.low + MachineEstimate::RoundFromZero(pos.low * neg)),
-            MachineEstimate::RoundFromZero(add.high + MachineEstimate::RoundToZero(pos.high * neg)));
+    return MachineEstimate(MachineEstimate::RoundToZero(
+                             add.low + MachineEstimate::RoundFromZero(pos.low * neg)),
+                           MachineEstimate::RoundFromZero(
+                             add.high + MachineEstimate::RoundToZero(pos.high * neg)));
 }
-
 
 void MachineEstimate::BeginComputation()
 {
     double zero = 0.0;
-    plusinf = 1.0/zero;
+    plusinf = 1.0 / zero;
     minusinf = -plusinf;
     OnePEps = nextafter(1.0, plusinf);
     OneMEps = nextafter(1.0, minusinf);
 }
 
-void MachineEstimate::FinishComputation()
-{
-}
+void MachineEstimate::FinishComputation() {}
 
-std::ostream& operator <<(std::ostream &os, const MachineEstimate &e)
-{    
+std::ostream &operator<<(std::ostream &os, const MachineEstimate &e)
+{
     return os << e.weak_AsDouble();
     /*
     if (e.low < 0 && e.high > 0) return os << 0.0;
@@ -206,9 +157,9 @@ std::ostream& operator <<(std::ostream &os, const MachineEstimate &e)
 MachineEstimate cos(const MachineEstimate &x)
 {
     MachineEstimate z(x * me_rpi4);
-    double d = z.Sum();    // possibly inexact, reflected in doubling r
-    MachineEstimate r(z.Diff());    // exact
-    z = MachineEstimate(fabs(d - floor(d+0.5)));    // exact operations
+    double d = z.Sum();          // possibly inexact, reflected in doubling r
+    MachineEstimate r(z.Diff()); // exact
+    z = MachineEstimate(fabs(d - floor(d + 0.5))); // exact operations
     // now z has (-pi,pi] mapped into (-0.5, 0.5]
     // the minimax we use does the cosine of (-pi/3, pi/3]
     // mapped into (-0.5, 0.5], squared
@@ -233,14 +184,13 @@ MachineEstimate cos(const MachineEstimate &x)
     s6 = s0.MulPositive(4.0);
     s0 = s4.MulPositive(s6) - s2;
     return s0.AddError((r.MulDouble(me_upped_pi2)));
-
 }
 
 MachineEstimate sin(const MachineEstimate &x)
 {
     MachineEstimate z(x * me_rpi4);
-    double d = z.Sum();    // possibly inexact, reflected in doubling error
-    d = d - floor(d+0.5);    // exact operations
+    double d = z.Sum();     // possibly inexact, reflected in doubling error
+    d = d - floor(d + 0.5); // exact operations
     MachineEstimate r(z.Diff());
     z = fabs(d);
     // now r has (-pi,pi] mapped into (-0.5, 0.5]
@@ -268,23 +218,19 @@ MachineEstimate sin(const MachineEstimate &x)
     s6 = s0.MulPositive(4.0);
     s0 = s2.SubProductPositive(s4, s6);
     return s0.AddError((r.MulDouble(me_upped_pi2)));
-
 }
 
-static inline
-void logreduction(const double additive, const double v, double &a, double &e)
+static inline void logreduction(const double additive, const double v, double &a,
+                                double &e)
 {
     if (v < 1.0) {
         a = v;
-        e -= additive;    // this is exact, because e only holds up to 12 bits until now
+        e -= additive; // this is exact, because e only holds up to 12 bits until now
     }
 }
 
-static inline 
-void logreduction(const MachineEstimate &factor,
-        const double additive,
-        MachineEstimate &arg,
-        MachineEstimate &exp)
+static inline void logreduction(const MachineEstimate &factor, const double additive,
+                                MachineEstimate &arg, MachineEstimate &exp)
 {
     MachineEstimate v(arg.MulPositive(factor));
     logreduction(additive, v.low, arg.low, exp.low);
@@ -295,10 +241,13 @@ MachineEstimate log(const MachineEstimate &arg)
 {
     int el, eh;
     if (!(arg.IsPositive()))
-        if (arg.IsNegative()) throw DomainException("log");
-        else throw PrecisionException("log");
+        if (arg.IsNegative())
+            throw DomainException("log");
+        else
+            throw PrecisionException("log");
 
-    MachineEstimate a(frexp(arg.low, &el), frexp(arg.high, &eh));    // these are both exact operations
+    MachineEstimate a(frexp(arg.low, &el),
+                      frexp(arg.high, &eh)); // these are both exact operations
     MachineEstimate e(el, eh);
 
     logreduction(me_sqrt_2, 0.5, a, e);
@@ -306,7 +255,8 @@ MachineEstimate log(const MachineEstimate &arg)
 
     // we're switching the two positions here so that we could use MulPositive on what are
     // actually negative values
-    a = MachineEstimate(1.0 - a.high, 1.0 - a.low);    // this is exact as a is within (0.5, 1.0]
+    a = MachineEstimate(1.0 - a.high,
+                        1.0 - a.low); // this is exact as a is within (0.5, 1.0]
 
     MachineEstimate a2(a.MulPositive(a));
 
@@ -335,7 +285,7 @@ MachineEstimate log(const MachineEstimate &arg)
 
     e = e.MulPositiveRHS(me_ln2);
 
-    // this gets us just what we want 
+    // this gets us just what we want
     return e - s3;
 }
 
@@ -343,11 +293,11 @@ MachineEstimate exp(const MachineEstimate &arg)
 {
     MachineEstimate a(arg * me_log2e);
 
-    if (a.high >= 1020.0 || a.low <= -1020.0) 
+    if (a.high >= 1020.0 || a.low <= -1020.0)
         throw PrecisionException("exp");
 
     MachineEstimate z(floor(a.low), floor(a.high));
-    a = MachineEstimate(a.low - z.low, a.high - z.high);        // exact result
+    a = MachineEstimate(a.low - z.low, a.high - z.high); // exact result
 
     MachineEstimate s1(ExpConsts[11]);
     MachineEstimate s0(ExpConsts[9]);
@@ -371,7 +321,8 @@ MachineEstimate exp(const MachineEstimate &arg)
     s2 = s2.AddProductPositive(s0, a8);
     s3 = s3 + s2;
 
-    z = MachineEstimate(ldexp(s3.low, int(z.low)-1), ldexp(s3.high, int(z.high)-1));    // ldexp is exact
+    z = MachineEstimate(ldexp(s3.low, int(z.low) - 1),
+                        ldexp(s3.high, int(z.high) - 1)); // ldexp is exact
     return z;
 }
 
@@ -418,14 +369,18 @@ MachineEstimate atanprimary(const MachineEstimate &arg)
 MachineEstimate atan(const MachineEstimate &x)
 {
     if (x.IsPositive()) {
-        if (x > 1.0) return me_pi_over_2 - atanprimary(recip(x));
-        else if (x < 1.0) return atanprimary(x);
+        if (x > 1.0)
+            return me_pi_over_2 - atanprimary(recip(x));
+        else if (x < 1.0)
+            return atanprimary(x);
         else // atan is Lipschitz 1. Just return pi/4 + twice the error from argument
             return MachineEstimate(me_pi_over_4).AddError(x.Diff());
     } else if (x.IsNegative()) {
         MachineEstimate y(-x);
-        if (y > 1.0) return atanprimary(recip(y)) - me_pi_over_2;
-        else if (y < 1.0) return -atanprimary(y);
+        if (y > 1.0)
+            return atanprimary(recip(y)) - me_pi_over_2;
+        else if (y < 1.0)
+            return -atanprimary(y);
         else // atan is Lipschitz 1. Just return pi/4 + twice the error from argument
             return -MachineEstimate(me_pi_over_4).AddError(x.Diff());
     } else {
@@ -433,53 +388,60 @@ MachineEstimate atan(const MachineEstimate &x)
     }
 }
 
-
 MachineEstimate atan2(const MachineEstimate &y, const MachineEstimate &x)
 {
-    if (!x.IsValueValid() || !y.IsValueValid()) 
+    if (!x.IsValueValid() || !y.IsValueValid())
         throw PrecisionException("atan2 argument");
 
     if (x.IsPositive()) {
         if (y.IsPositive()) {
-            MachineEstimate d(x-y);
-            if (d.IsPositive()) return atanprimary(y/x);
-            else if (d.IsNegative()) return me_pi_over_2 - atanprimary(x/y);
+            MachineEstimate d(x - y);
+            if (d.IsPositive())
+                return atanprimary(y / x);
+            else if (d.IsNegative())
+                return me_pi_over_2 - atanprimary(x / y);
             else {
-                MachineEstimate r(y/x);
+                MachineEstimate r(y / x);
                 return MachineEstimate(me_pi_over_4).AddError(r.Diff());
             }
         } else if (y.IsNegative()) {
-            MachineEstimate d(x+y);
-            if (d.IsPositive()) return -atanprimary((-y)/x);
-            else if (d.IsNegative()) return atanprimary(x/(-y)) - me_pi_over_2;
+            MachineEstimate d(x + y);
+            if (d.IsPositive())
+                return -atanprimary((-y) / x);
+            else if (d.IsNegative())
+                return atanprimary(x / (-y)) - me_pi_over_2;
             else {
-                MachineEstimate r(y/x);        // sign doesn't matter here
+                MachineEstimate r(y / x); // sign doesn't matter here
                 return -MachineEstimate(me_pi_over_4).AddError(r.Diff());
             }
         } else {
-            MachineEstimate r(y/x);
+            MachineEstimate r(y / x);
             return MachineEstimate().SetError(r.Diff());
         }
-    } else 
-        // no check needed because x close to zero would either not cause a problem
-        // if y is big enough, or will cause a PrecisionException at the moment of
-        // the division y/x or directly
-        //if (x.IsNegative()) 
+    } else
+    // no check needed because x close to zero would either not cause a problem
+    // if y is big enough, or will cause a PrecisionException at the moment of
+    // the division y/x or directly
+    //if (x.IsNegative())
     {
         if (y.IsPositive()) {
-            MachineEstimate d(-x-y);
-            if (d.IsPositive()) return me_pi - atanprimary(y/(-x));
-            else if (d.IsNegative()) return me_pi_over_2 + atanprimary((-x)/y);
+            MachineEstimate d(-x - y);
+            if (d.IsPositive())
+                return me_pi - atanprimary(y / (-x));
+            else if (d.IsNegative())
+                return me_pi_over_2 + atanprimary((-x) / y);
             else {
-                MachineEstimate r(y/x);
+                MachineEstimate r(y / x);
                 return (me_pi + me_pi_over_4).AddError(r.Diff());
             }
         } else if (y.IsNegative()) {
-            MachineEstimate d(y-x);
-            if (d.IsPositive()) return atanprimary(y/x) - me_pi;
-            else if (d.IsNegative()) return -(atanprimary(x/y) + me_pi_over_2);
+            MachineEstimate d(y - x);
+            if (d.IsPositive())
+                return atanprimary(y / x) - me_pi;
+            else if (d.IsNegative())
+                return -(atanprimary(x / y) + me_pi_over_2);
             else {
-                MachineEstimate r(y/x);        // sign doesn't matter here
+                MachineEstimate r(y / x); // sign doesn't matter here
                 return -(me_pi + me_pi_over_4).AddError(r.Diff());
             }
         } else {
@@ -499,17 +461,16 @@ MachineEstimate acos(const MachineEstimate &x)
 }
 #endif
 
-template <>
+template<>
 MachineEstimate pi(unsigned int prec)
 {
     return me_pi;
 }
 
-template <>
+template<>
 MachineEstimate ln2(unsigned int prec)
 {
     return me_ln2;
 }
 
 }
-

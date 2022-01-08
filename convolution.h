@@ -27,33 +27,31 @@
 #ifndef FILE_CONVOLUTION_H
 #define FILE_CONVOLUTION_H
 
-
 // real convolution object
-// size is the convolution size, that is 
+// size is the convolution size, that is
 // for kernel length N and signal length M, N + M - 1
 // the inputs to Convolve are of length size, padded with 0.
 // the output of Convolve is in a; b is destroyed.
 
 // this object works only on size = 2 ^ k for an integer k
 
+template<class TYPE>
+class Convolution
+{
+  private:
+    TYPE *m_pWeights; // pre-computed weights vector (exp(jpi2 * i/size))
+    int *m_pBR;       // pre-computed bit-reversed vector
+    int m_Size;       // size of the operation
 
-template <class TYPE>
-class Convolution {
-private:
-    TYPE *m_pWeights;       // pre-computed weights vector (exp(jpi2 * i/size))
-    int *m_pBR;             // pre-computed bit-reversed vector
-    int m_Size;             // size of the operation
-
-public:
-    Convolution(int size, TYPE PI2);    
-    ~Convolution();         
+  public:
+    Convolution(int size, TYPE PI2);
+    ~Convolution();
 
     // perform convolution on the given arrays
     // output in a, b destroyed
     void Convolve(TYPE *a, TYPE *b, int size = 0);
 
-    int GetSize() 
-    { return m_Size; }
+    int GetSize() { return m_Size; }
 };
 
 #endif

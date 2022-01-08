@@ -5,25 +5,27 @@
 using namespace RealLib;
 using namespace std;
 
-template <class TYPE>
+template<class TYPE>
 TYPE myexp(const TYPE &arg)
 {
     unsigned int prec = arg.GetPrecision();
     TYPE s(0.0);
     TYPE m(1.0);
 
-    if (abs(arg) > 1.0) throw DomainException("myexp");
-    if (!(abs(arg) < 1.0)) throw PrecisionException("myexp");
+    if (abs(arg) > 1.0)
+        throw DomainException("myexp");
+    if (!(abs(arg) < 1.0))
+        throw PrecisionException("myexp");
 
-    for (unsigned i=1; i<=prec; ++i) {
+    for (unsigned i = 1; i <= prec; ++i) {
         s += m;
-        m = m*arg/i;
+        m = m * arg / i;
     }
-    return s.AddError(m*3);
+    return s.AddError(m * 3);
 }
 CreateUnaryRealFunction(myexp)
 
-int main()
+  int main()
 {
     InitializeRealLib();
     {
@@ -32,10 +34,9 @@ int main()
 
         cout << fixed << setprecision(10);
         cout << "a(myexp(0.5)) =\t" << a << endl;
-        cout << "a*a =\t\t" << a*a << endl;
+        cout << "a*a =\t\t" << a * a << endl;
         cout << "b(exp(1)) =\t" << b << endl;
-        cout << "a*a/b =\t\t" << setprecision(300) << showpoint 
-                << a*a/b << endl;
+        cout << "a*a/b =\t\t" << setprecision(300) << showpoint << a * a / b << endl;
     }
     cout << "precision used: " << FinalizeRealLib();
 

@@ -21,8 +21,8 @@
 
 #include <stdint.h>
 
-namespace RealLib {
-
+namespace RealLib
+{
 typedef int32_t i32;
 typedef uint32_t u32;
 typedef int64_t i64;
@@ -40,14 +40,14 @@ typedef uint64_t u64;
 
 #define NAMESPACE_STD std
 
-#else  // MS Visual C++
+#else // MS Visual C++
 
-#define NAMESPACE_STD 
+#define NAMESPACE_STD
 #endif
 
 #if defined(__MWERKS__)
 typedef i32 exp_type;
-#define MINIMUM_EXPONENT (-(1<<28))
+#define MINIMUM_EXPONENT (-(1 << 28))
 #else
 typedef i64 exp_type;
 #define MINIMUM_EXPONENT (-I32_MAX)
@@ -105,7 +105,7 @@ typedef i64 exp_type;
 #endif
 
 #if (_MSC_VER >= 1400)
-#pragma warning (disable: 4996)
+#pragma warning(disable : 4996)
 #endif
 
 // the SSE2 version of MachineEstimate can rely on SSE2

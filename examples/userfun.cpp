@@ -13,11 +13,11 @@ Estimate etaylor(unsigned int prec)
     Estimate s(0.0);
     Estimate m(1.0);
 
-    for (int i=1; i<=prec; ++i) {
+    for (int i = 1; i <= prec; ++i) {
         s += m;
         m /= i;
     }
-    return s.AddError(m*2);
+    return s.AddError(m * 2);
 }
 
 Estimate exptaylor(const Estimate &arg)
@@ -26,14 +26,16 @@ Estimate exptaylor(const Estimate &arg)
     Estimate s(0.0);
     Estimate m(1.0);
 
-    if (abs(arg) > 1.0) throw DomainException("exptaylor");
-    if (!(abs(arg) < 1.0)) throw PrecisionException("exptaylor");
+    if (abs(arg) > 1.0)
+        throw DomainException("exptaylor");
+    if (!(abs(arg) < 1.0))
+        throw PrecisionException("exptaylor");
 
-    for (int i=1; i<=prec; ++i) {
+    for (int i = 1; i <= prec; ++i) {
         s += m;
-        m = m*arg/i;
+        m = m * arg / i;
     }
-    return s.AddError(m*2);
+    return s.AddError(m * 2);
 }
 
 Real exptaylor(const Real &arg)
@@ -50,7 +52,8 @@ int main()
         Real one(Real(etaylor) / sq(exptaylor(Real(0.5))));
 
         try {
-            cout << "etaylor / sq(exptaylor(0.5)):\t" << setprecision(50) << showpoint << one << endl;
+            cout << "etaylor / sq(exptaylor(0.5)):\t" << setprecision(50) << showpoint
+                 << one << endl;
         } catch (RealLibException e) {
             cout << "exception: " << e.what();
         }
@@ -59,8 +62,8 @@ int main()
     unsigned pr = FinalizeRealLib();
 
     clock_t endtime = clock();
-    cout << "prec: " << pr << " time elapsed: " << setprecision(6) <<
-            double(endtime - starttime) / CLOCKS_PER_SEC << endl;
+    cout << "prec: " << pr << " time elapsed: " << setprecision(6)
+         << double(endtime - starttime) / CLOCKS_PER_SEC << endl;
 
     cin.get();
     return 0;

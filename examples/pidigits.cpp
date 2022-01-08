@@ -10,16 +10,14 @@ using namespace RealLib;
 int main(int argc, char **argv)
 {
     int len = default_len;
-    if (argc>1)
+    if (argc > 1)
         sscanf(argv[1], "%d", &len);
     len += 5;
-    char* buf = new char[len];
-
+    char *buf = new char[len];
 
     clock_t starttime = clock();
     FILE *f = fopen("pi.txt", "w");
     InitializeRealLib(4, 4);
-
 
     {
         sprintf(buf, "1e-%d", len);

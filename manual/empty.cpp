@@ -4,11 +4,11 @@
 using namespace std;
 using namespace RealLib;
 
-int main() {
-	InitializeRealLib();
-	{
-		
-	}
-	FinalizeRealLib();
-	return 0;
+int main()
+{
+    InitializeRealLib();
+    {
+    }
+    FinalizeRealLib();
+    return 0;
 }

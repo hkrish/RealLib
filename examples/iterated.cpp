@@ -15,8 +15,8 @@ int main()
         Real c(3.75);
         int num = 1000;
 
-        for (int i=1; i<=num; ++i)
-            x = c*x*(1-x);
+        for (int i = 1; i <= num; ++i)
+            x = c * x * (1 - x);
 
         printf("%dth: %s\n", num, x.AsDecimal(buf, 15));
     }

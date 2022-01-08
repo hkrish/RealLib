@@ -39,7 +39,8 @@
 
 #include "RealEncapsulation.h"
 
-namespace RealLib {
+namespace RealLib
+{
 
 struct ObjectList;
 struct EvalList;
@@ -49,25 +50,26 @@ struct EvalList;
 // change), when they become invalid
 extern ObjectList *g_pEstimatesList;
 
-typedef const char* (*OracleFunction) (unsigned precision);
+typedef const char *(*OracleFunction)(unsigned precision);
 
 // prec and the Encapsulation working precision will grow together
 
 // RealObject: the abstract base class
 
-class RealObject {
+class RealObject
+{
     // reference counter
     i32 m_RefCount;
     // a pointer to the pointer to this object in g_pEstimatesList
     ObjectList *m_pPtrInObjList;
 
-protected:
+  protected:
     // temporary Encapsulation
     EncapsulationPointer m_pEstimate;
 
     RealObject(u32 rc = 0);
 
-    // evaluation procedure. 
+    // evaluation procedure.
     // To be overridden by implementations
     virtual Encapsulation Evaluate() = 0;
 
@@ -78,7 +80,7 @@ protected:
     // only in RealUnary and RealBinary
     virtual void ReleaseSiblings();
 
-public:
+  public:
     // depth. equal to the max depth of the siblings + 1
     i32 m_Depth;
     // Encapsulation refs. set to refcount when the Encapsulation is created.
@@ -89,8 +91,7 @@ public:
     // get the Encapsulation, evaluate if necessary
     Encapsulation GetEstimate();
     // do we hold an Encapsulation?
-    bool HasEstimate()
-    { return m_pEstimate; }
+    bool HasEstimate() { return m_pEstimate; }
 
     void AddToEstimatesList();
     void RemoveFromEstimatesList();
@@ -102,17 +103,16 @@ public:
     virtual void DestroyEstimate();
 
     // add reference. Called when a pointer to this object is saved
-    RealObject* AddRef();
+    RealObject *AddRef();
     // release: decreases refcount and deletes object if rc == 0
     void Release(int DecreaseCachedRefCount = 0);
     // get the reference count
-    u32 GetRefCount() 
-    { return m_RefCount; }
+    u32 GetRefCount() { return m_RefCount; }
 
     // returns the sibling with the given index
     // returns NULL if there are no more
     // to be used to do recursion with a separate stack
-    virtual RealObject* GetSibling(int index);
+    virtual RealObject *GetSibling(int index);
     // non-recursive release, to be combined with GetSibling
     void NonRecursiveRelease();
 
@@ -170,87 +170,106 @@ struct EvalList {
 
 // real from double. Handles conversion.
 
-class RealFromDouble : public RealObject {
+class RealFromDouble : public RealObject
+{
     double m_Value;
-protected:
+
+  protected:
     virtual ~RealFromDouble();
     virtual Encapsulation Evaluate();
 
-public:
+  public:
     RealFromDouble(const double src);
 };
 
 // real from string. Handles conversion
-class RealFromString : public RealObject {
+class RealFromString : public RealObject
+{
     char *m_pString;
-protected:
+
+  protected:
     virtual ~RealFromString();
     virtual Encapsulation Evaluate();
-public:
+
+  public:
     RealFromString(const char *src);
 };
 
 // real from oracle function
-class RealFromOracle : public RealObject {
+class RealFromOracle : public RealObject
+{
     OracleFunction m_pOracle;
-protected:
+
+  protected:
     virtual ~RealFromOracle();
     virtual Encapsulation Evaluate();
-public:
+
+  public:
     RealFromOracle(OracleFunction oracle);
 };
 
 // RealNullary. constants
-class RealNullary : public RealObject {
-public:
-    typedef Encapsulation (*FuncNullary) (unsigned int prec, UserInt otherData);
-private:
+class RealNullary : public RealObject
+{
+  public:
+    typedef Encapsulation (*FuncNullary)(unsigned int prec, UserInt otherData);
+
+  private:
     FuncNullary m_pFunc;
     UserInt m_iUserData;
-protected:
+
+  protected:
     virtual ~RealNullary();
     virtual Encapsulation Evaluate();
-public:
+
+  public:
     RealNullary(FuncNullary pFunc, UserInt userData);
 };
 
 // unary functions
-class RealUnary : public RealObject {
-public:
-    typedef Encapsulation (*FuncUnary) (const Encapsulation &arg, UserInt otherData);
-private:
+class RealUnary : public RealObject
+{
+  public:
+    typedef Encapsulation (*FuncUnary)(const Encapsulation &arg, UserInt otherData);
+
+  private:
     FuncUnary m_pFunc;
     RealObject *m_pArg;
     UserInt m_iUserData;
 
-protected:
+  protected:
     virtual ~RealUnary();
     virtual void ReleaseSiblings();
     virtual Encapsulation Evaluate();
-public:
+
+  public:
     //virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
     RealUnary(FuncUnary pFunc, RealObject *pArg, UserInt userData);
-    virtual RealObject* GetSibling(int index);
+    virtual RealObject *GetSibling(int index);
 };
 
 // binary functions
-class RealBinary : public RealObject {
-public:
-    typedef Encapsulation (*FuncBinary) (const Encapsulation &left, const Encapsulation &right, UserInt otherData);
-private:
+class RealBinary : public RealObject
+{
+  public:
+    typedef Encapsulation (*FuncBinary)(const Encapsulation &left,
+                                        const Encapsulation &right, UserInt otherData);
+
+  private:
     FuncBinary m_pFunc;
     RealObject *m_pLeft;
     RealObject *m_pRight;
     UserInt m_iUserData;
 
-protected:
+  protected:
     virtual ~RealBinary();
     virtual void ReleaseSiblings();
     virtual Encapsulation Evaluate();
-public:
+
+  public:
     //virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
     RealBinary(FuncBinary pFunc, RealObject *pLeft, RealObject *pRight, UserInt userData);
-    virtual RealObject* GetSibling(int index);
+    virtual RealObject *GetSibling(int index);
 };
 
 /*
@@ -280,11 +299,12 @@ public:
 // created that holds a reference to the array.
 // Evaluation of the element is passed along as evaluation of the
 // array, having set the request index to its own.
-class RealArray : public RealObject {
-public:
-    typedef void (*FuncArray) (ArrayInterface<Encapsulation>&, UserInt otherData);
+class RealArray : public RealObject
+{
+  public:
+    typedef void (*FuncArray)(ArrayInterface<Encapsulation> &, UserInt otherData);
     //typedef void (*FuncArray) (Encapsulation* arr, unsigned int count, void* userdata);
-private:
+  private:
     FuncArray m_pFunc;
     RealObject **m_pArray;
     EncapsulationPointer m_pEstimateArray;
@@ -292,34 +312,38 @@ private:
     UserInt m_iUserData;
     i32 m_uRequestIndex;
 
-protected:
+  protected:
     virtual ~RealArray();
     virtual void ReleaseSiblings();
     virtual Encapsulation Evaluate();
-public:
+
+  public:
     virtual EncapsulationPointer CreateEstimate(const Encapsulation &val);
     virtual void DestroyEstimate();
     void SetRequestIndex(i32 index);
 
     //virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
     RealArray(FuncArray pFunc, RealObject **pArray, unsigned int count, UserInt user);
-    virtual RealObject* GetSibling(int index);
+    virtual RealObject *GetSibling(int index);
 };
 
-class RealArrayElement : public RealObject {
-private:
-    RealArray* m_pArray;
+class RealArrayElement : public RealObject
+{
+  private:
+    RealArray *m_pArray;
     u32 m_uMyIndex;
-protected:
+
+  protected:
     virtual ~RealArrayElement();
     virtual void ReleaseSiblings();
     virtual Encapsulation Evaluate();
-public:
+
+  public:
     virtual EncapsulationPointer CreateEstimate(const Encapsulation &val);
     virtual void DestroyEstimate();
     //virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
     RealArrayElement(RealArray *pArray, u32 myindex);
-    virtual RealObject* GetSibling(int index);
+    virtual RealObject *GetSibling(int index);
 };
 
 } // namespace

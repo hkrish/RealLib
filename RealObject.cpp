@@ -35,42 +35,44 @@
 #define NULL (0)
 #endif
 
-namespace RealLib {
+namespace RealLib
+{
 
 ObjectList *g_pEstimatesList = NULL;
 
-
 RealObject::RealObject(u32 rc)
-: m_RefCount(rc), m_pPtrInObjList(0), m_pEstimate(), m_Depth(0), m_EstimateRefs(0)
+  : m_RefCount(rc)
+  , m_pPtrInObjList(0)
+  , m_pEstimate()
+  , m_Depth(0)
+  , m_EstimateRefs(0)
 {
 }
 
 RealObject::~RealObject()
 {
-    DestroyEstimate(); 
+    DestroyEstimate();
 }
 
-void RealObject::ReleaseSiblings()
-{
-}
+void RealObject::ReleaseSiblings() {}
 
-RealObject* RealObject::AddRef()
+RealObject *RealObject::AddRef()
 {
-    assert(this); 
+    assert(this);
     ++m_RefCount;
 
     // if there is an Encapsulation, the new reference
     // will need one more access to it
-    if (m_EstimateRefs) 
+    if (m_EstimateRefs)
         ++m_EstimateRefs;
 
     //    cout << "AddRef in " << this << " refs " << m_RefCount << " estrefs " << m_EstimateRefs << endl;
-    return this; 
+    return this;
 }
 
 void RealObject::Release(int ReleaseCachedRefCount)
 {
-    assert(this); 
+    assert(this);
     assert(m_RefCount > 0);
 
     // note: we don't decrease m_EstimateRefs
@@ -109,7 +111,8 @@ Encapsulation RealObject::GetEstimate()
             Encapsulation est = *m_pEstimate;
             DestroyEstimate();
             return est;
-        } else return *m_pEstimate;
+        } else
+            return *m_pEstimate;
     } else if (m_RefCount > 1) {
         // create a new Encapsulation
         Encapsulation val(Evaluate());
@@ -125,7 +128,6 @@ Encapsulation RealObject::GetEstimate()
         m_EstimateRefs = 0;
         return Evaluate();
     }
-
 }
 
 void RealObject::AddToEstimatesList()
@@ -178,7 +180,7 @@ void RealObject::DestroyEstimate()
     }
 }
 
-RealObject* RealObject::GetSibling(int index)
+RealObject *RealObject::GetSibling(int index)
 {
     index;
     return NULL;
@@ -187,7 +189,7 @@ RealObject* RealObject::GetSibling(int index)
 void RealObject::NonRecursiveRelease()
 {
     // release the object, but do not release siblings if it
-    // is deleted. They have already been visited 
+    // is deleted. They have already been visited
     // (FinishRelease is called on GetDepthList exit,
     // from the bottom up)
     assert(this);
@@ -200,13 +202,11 @@ void RealObject::NonRecursiveRelease()
 // real from double
 
 RealFromDouble::RealFromDouble(const double src)
-: m_Value(src)
+  : m_Value(src)
 {
 }
 
-RealFromDouble::~RealFromDouble()
-{
-}
+RealFromDouble::~RealFromDouble() {}
 
 Encapsulation RealFromDouble::Evaluate()
 {
@@ -223,10 +223,10 @@ RealFromString::RealFromString(const char *src)
     m_pString = new char[strlen(src) + 1];
     assert(m_pString);
 #ifdef _MSC_VER
-#pragma warning (push)
-#pragma warning (disable:4996)
+#pragma warning(push)
+#pragma warning(disable : 4996)
     strcpy(m_pString, src);
-#pragma warning (pop)
+#pragma warning(pop)
 #else
     strcpy(m_pString, src);
 #endif
@@ -245,23 +245,25 @@ Encapsulation RealFromString::Evaluate()
 // real from oracle function
 
 RealFromOracle::RealFromOracle(OracleFunction oracle)
-: m_pOracle(oracle)
+  : m_pOracle(oracle)
 {
 }
 
-RealFromOracle::~RealFromOracle()
-{
-}
+RealFromOracle::~RealFromOracle() {}
 
 Encapsulation RealFromOracle::Evaluate()
 {
     const char *val = m_pOracle(g_WorkingPrecision);
     const char *eptr = strchr(val, 'e');
-    if (!eptr) eptr = strchr(val, 'E');
-    if (!eptr) eptr = strchr(val, 0);   // strlen of a kind
+    if (!eptr)
+        eptr = strchr(val, 'E');
+    if (!eptr)
+        eptr = strchr(val, 0); // strlen of a kind
     i32 len;
-    if (strchr(val, '.')) len = i32(eptr - val - 1);
-    else len = i32(eptr - val);
+    if (strchr(val, '.'))
+        len = i32(eptr - val - 1);
+    else
+        len = i32(eptr - val);
     double exp = -len * LOG_2_10;
     double man = (exp - floor(exp)) / LOG_2_10;
     Encapsulation e(val);
@@ -273,14 +275,13 @@ Encapsulation RealFromOracle::Evaluate()
 // real nullary (constants)
 
 RealNullary::RealNullary(FuncNullary pFunc, UserInt user)
-: m_pFunc(pFunc), m_iUserData(user)
+  : m_pFunc(pFunc)
+  , m_iUserData(user)
 {
     assert(pFunc);
 }
 
-RealNullary::~RealNullary()
-{
-}
+RealNullary::~RealNullary() {}
 
 Encapsulation RealNullary::Evaluate()
 {
@@ -290,7 +291,9 @@ Encapsulation RealNullary::Evaluate()
 // real unary
 
 RealUnary::RealUnary(FuncUnary pFunc, RealObject *pArg, UserInt user)
-: m_pFunc(pFunc), m_pArg(pArg), m_iUserData(user)
+  : m_pFunc(pFunc)
+  , m_pArg(pArg)
+  , m_iUserData(user)
 {
     assert(pFunc);
     assert(pArg);
@@ -302,9 +305,7 @@ RealUnary::RealUnary(FuncUnary pFunc, RealObject *pArg, UserInt user)
     m_Depth = pArg->m_Depth + 1;
 }
 
-RealUnary::~RealUnary()
-{
-}
+RealUnary::~RealUnary() {}
 
 void RealUnary::ReleaseSiblings()
 {
@@ -317,16 +318,19 @@ Encapsulation RealUnary::Evaluate()
     return m_pFunc(m_pArg->GetEstimate(), m_iUserData);
 }
 
-RealObject* RealUnary::GetSibling(int index)
+RealObject *RealUnary::GetSibling(int index)
 {
     return index == 0 ? m_pArg : NULL;
 }
 
-
 // binary
 
-RealBinary::RealBinary(FuncBinary pFunc, RealObject *pLeft, RealObject *pRight, UserInt user)
-: m_pFunc(pFunc), m_pLeft(pLeft), m_pRight(pRight), m_iUserData(user)
+RealBinary::RealBinary(FuncBinary pFunc, RealObject *pLeft, RealObject *pRight,
+                       UserInt user)
+  : m_pFunc(pFunc)
+  , m_pLeft(pLeft)
+  , m_pRight(pRight)
+  , m_iUserData(user)
 {
     assert(pFunc);
     assert(pLeft);
@@ -340,9 +344,7 @@ RealBinary::RealBinary(FuncBinary pFunc, RealObject *pLeft, RealObject *pRight, 
     m_Depth = max(pLeft->m_Depth, pRight->m_Depth) + 1;
 }
 
-RealBinary::~RealBinary()
-{
-}
+RealBinary::~RealBinary() {}
 
 void RealBinary::ReleaseSiblings()
 {
@@ -355,30 +357,39 @@ Encapsulation RealBinary::Evaluate()
     return m_pFunc(m_pLeft->GetEstimate(), m_pRight->GetEstimate(), m_iUserData);
 }
 
-RealObject* RealBinary::GetSibling(int index)
+RealObject *RealBinary::GetSibling(int index)
 {
     if (index == 0) {
-        if (m_pLeft->m_Depth <= m_pRight->m_Depth) return m_pRight;
-        else return m_pLeft;
+        if (m_pLeft->m_Depth <= m_pRight->m_Depth)
+            return m_pRight;
+        else
+            return m_pLeft;
     } else if (index == 1) {
-        if (m_pLeft->m_Depth <= m_pRight->m_Depth) return m_pLeft;
-        else return m_pRight;
-    } else return NULL;
+        if (m_pLeft->m_Depth <= m_pRight->m_Depth)
+            return m_pLeft;
+        else
+            return m_pRight;
+    } else
+        return NULL;
 
     //return index == 0 ? m_pLeft : (index == 1 ? m_pRight : NULL);
 }
 
 // RealArray implementation
 
-RealArray::RealArray(FuncArray pFunc, RealObject **pArray, unsigned int count, UserInt userdata)
-: m_pFunc(pFunc), m_pArray(pArray), m_uCount(count), m_iUserData(userdata)
+RealArray::RealArray(FuncArray pFunc, RealObject **pArray, unsigned int count,
+                     UserInt userdata)
+  : m_pFunc(pFunc)
+  , m_pArray(pArray)
+  , m_uCount(count)
+  , m_iUserData(userdata)
 {
     assert(pFunc);
     assert(pArray);
     // references should have already been added
 
     u32 depth = 0;
-    for (u32 i=0;i<count;++i)
+    for (u32 i = 0; i < count; ++i)
         depth = max(i32(depth), pArray[i]->m_Depth);
     m_Depth = depth + 1;
 }
@@ -392,14 +403,15 @@ RealArray::~RealArray()
 
 void RealArray::SetRequestIndex(i32 index)
 {
-    assert(index >= 0 && index < i32(m_uCount)); 
-    m_uRequestIndex = index; 
-    if (m_pEstimate) m_pEstimate = m_pEstimateArray + index; 
+    assert(index >= 0 && index < i32(m_uCount));
+    m_uRequestIndex = index;
+    if (m_pEstimate)
+        m_pEstimate = m_pEstimateArray + index;
 }
 
 void RealArray::ReleaseSiblings()
 {
-    for (u32 i=0;i<m_uCount;++i)
+    for (u32 i = 0; i < m_uCount; ++i)
         m_pArray[i]->Release();
 }
 
@@ -408,8 +420,7 @@ EncapsulationPointer RealArray::CreateEstimate(const Encapsulation &val)
     val;
     // the actual job is done by Evaluate
     // only return the pointer
-    return EncapsulationPointer::FromPointer
-            (m_pEstimateArray + m_uRequestIndex);
+    return EncapsulationPointer::FromPointer(m_pEstimateArray + m_uRequestIndex);
 }
 
 void RealArray::DestroyEstimate()
@@ -427,7 +438,7 @@ Encapsulation RealArray::Evaluate()
     m_pEstimateArray = EncapsulationPointer(m_uCount);
     AddToEstimatesList();
 
-    for (u32 i=0;i<m_uCount;++i)
+    for (u32 i = 0; i < m_uCount; ++i)
         m_pEstimateArray[i] = m_pArray[i]->GetEstimate();
     ArrayInterface<Encapsulation> arr(m_pEstimateArray, m_uCount);
     m_pFunc(arr, m_iUserData);
@@ -435,21 +446,20 @@ Encapsulation RealArray::Evaluate()
     return m_pEstimateArray[m_uRequestIndex];
 }
 
-RealObject* RealArray::GetSibling(int index)
+RealObject *RealArray::GetSibling(int index)
 {
     return u32(index) < m_uCount ? m_pArray[index] : NULL;
 }
 
 RealArrayElement::RealArrayElement(RealArray *pArray, u32 myindex)
-: m_pArray(pArray), m_uMyIndex(myindex)
+  : m_pArray(pArray)
+  , m_uMyIndex(myindex)
 {
     pArray->AddRef();
     m_Depth = (pArray->m_Depth + 1);
 }
 
-RealArrayElement::~RealArrayElement()
-{
-}
+RealArrayElement::~RealArrayElement() {}
 
 void RealArrayElement::ReleaseSiblings()
 {
@@ -474,9 +484,9 @@ Encapsulation RealArrayElement::Evaluate()
     return m_pArray->GetEstimate();
 }
 
-RealObject* RealArrayElement::GetSibling(int index)
+RealObject *RealArrayElement::GetSibling(int index)
 {
     return index == 0 ? m_pArray : NULL;
 }
 
-}  // namespace
+} // namespace

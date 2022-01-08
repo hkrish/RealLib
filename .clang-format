@@ -1,0 +1,22 @@
+﻿---
+BasedOnStyle: Mozilla
+AlignConsecutiveMacros: 'false'
+AlignOperands: 'true'
+AllowAllArgumentsOnNextLine: 'true'
+AllowAllParametersOfDeclarationOnNextLine: 'true'
+AlwaysBreakAfterDefinitionReturnType: 'None'
+AlwaysBreakAfterReturnType: 'None'
+BinPackArguments: 'true'
+BinPackParameters: 'true'
+BreakBeforeBraces: Linux
+ColumnLimit: '90'
+Cpp11BracedListStyle: 'true'
+IndentCaseLabels: 'false'
+IndentWidth: '4'
+KeepEmptyLinesAtTheStartOfBlocks: 'false'
+PointerAlignment: Right
+ReflowComments: 'false'
+SpacesInContainerLiterals: 'false'
+SortIncludes: 'false'
+
+...

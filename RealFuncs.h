@@ -33,16 +33,19 @@
 #include "MachineEstimate.h"
 #include "RealEstimate.h"
 
-namespace RealLib {
+namespace RealLib
+{
 
 // whenever LongFloat is closed there have to be no Estimates around. This function
 // is called by FinalizeRealLib to clean the Estimates for the constants.
 void DestroyConstantEstimates();
 
 // helper function
-template <class T>
+template<class T>
 static inline T sq(const T &arg)
-{ return arg * arg; }
+{
+    return arg * arg;
+}
 
 // NewtonIteration: takes argument, previous estimate and previous precision
 // outputs new estimate and updates prec (this is roughly bits, expected precision
@@ -53,15 +56,14 @@ typedef void (*NewtonIterator)(const Estimate &arg, Estimate &est, i32 &prec);
 // prec is always one step ahead, i.e. initialPrec should be the precision you
 // expect after one iteration. Using increasing precision, so that the complexity
 // can be of the order of the complexity of the inverse function.
-Estimate PerformNewton(Estimate arg, NewtonIterator iter, 
-                       Estimate initialEstimate, i32 initialPrec);
-
+Estimate PerformNewton(Estimate arg, NewtonIterator iter, Estimate initialEstimate,
+                       i32 initialPrec);
 
 typedef Estimate (*SeriesIterator)(const Estimate &arg, Estimate &workspace, i32 index);
 
-// PowerSeries: sums the series 
-void PowerSeriesDirect(const Estimate &arg, SeriesIterator iter,
-                       Estimate &sum, Estimate &workspace, i32 indexstart, i32 indexend);
+// PowerSeries: sums the series
+void PowerSeriesDirect(const Estimate &arg, SeriesIterator iter, Estimate &sum,
+                       Estimate &workspace, i32 indexstart, i32 indexend);
 
 // absolute value
 Estimate abs(const Estimate &arg);
@@ -84,7 +86,8 @@ Estimate log(const Estimate &arg);
 //template<class TYPE>
 //TYPE ln2(unsigned int prec);
 
-template <> Estimate ln2<Estimate>(unsigned int prec);
+template<>
+Estimate ln2<Estimate>(unsigned int prec);
 
 // pi: using Borwein iterations
 Estimate rpi(unsigned int prec);
@@ -92,16 +95,23 @@ Estimate rpi(unsigned int prec);
 //template<class TYPE>
 //TYPE pi(unsigned int prec);
 
-template <> Estimate pi(unsigned int prec);
+template<>
+Estimate pi(unsigned int prec);
 //Estimate pi(unsigned int prec);
 
 // forward trigonometric: using McLaurin expansion for sine and identities; O(M(n) * sqrt(n))
 Estimate sin_primary(const Estimate &arg); // only in primary range: [-pi/2;pi/2]
 Estimate sin(const Estimate &arg);
-static inline Estimate cos(const Estimate &arg) { return sin(pi<Estimate>(arg.GetPrecision())/2 - arg); }
+static inline Estimate cos(const Estimate &arg)
+{
+    return sin(pi<Estimate>(arg.GetPrecision()) / 2 - arg);
+}
 
-template <class TYPE>
-static inline TYPE cosfromsin(const TYPE &s) { return sqrt(1 - sq(s)); }
+template<class TYPE>
+static inline TYPE cosfromsin(const TYPE &s)
+{
+    return sqrt(1 - sq(s));
+}
 
 Estimate tan(const Estimate &arg);
 
@@ -109,11 +119,17 @@ Estimate tan(const Estimate &arg);
 Estimate asin_primary(const Estimate &arg); // only in primary range: [-sqrt(2);sqrt(2)]
 Estimate asin(const Estimate &arg);
 
-template <class Estimate>
-static inline Estimate acos(const Estimate &arg) { return pi<Estimate>(arg.GetPrecision())/2 - asin(arg); }
-template <class Estimate>
-static inline Estimate atan(const Estimate &arg) { return asin(arg * rsqrt(1 + sq(arg))); }
-template <class Estimate>
+template<class Estimate>
+static inline Estimate acos(const Estimate &arg)
+{
+    return pi<Estimate>(arg.GetPrecision()) / 2 - asin(arg);
+}
+template<class Estimate>
+static inline Estimate atan(const Estimate &arg)
+{
+    return asin(arg * rsqrt(1 + sq(arg)));
+}
+template<class Estimate>
 Estimate atan2(const Estimate &y, const Estimate &x);
 
 /*

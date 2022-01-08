@@ -14,7 +14,7 @@ int main()
         double ex(exp(1.0));
         double s(ex), m(1.0);
 
-        for (int i=1; i<=1000; ++i) {
+        for (int i = 1; i <= 1000; ++i) {
             s -= m;
             m /= i;
         }
@@ -27,7 +27,6 @@ int main()
             printf("difference:\t%20le\n", diff);
             printf("diff by real:\t%20le\n", (ex - exr).AsDouble());
         }
-
     }
 
     unsigned pr = FinalizeRealLib();

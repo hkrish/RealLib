@@ -16,7 +16,6 @@
   limitations under the License.
 */
 
-
 #include <math.h>
 #include <float.h>
 #include <stdio.h>
@@ -24,12 +23,17 @@
 #include "MachineEstimate.h"
 #include "RealFuncs.h"
 
-namespace RealLib {
+namespace RealLib
+{
 
 Estimate *g_pCachedEstimate_pi = NULL;
 Estimate *g_pCachedEstimate_ln2 = NULL;
 
-#define DELETE(x) if (x) { delete x; x = NULL; }
+#define DELETE(x)                                                                        \
+    if (x) {                                                                             \
+        delete x;                                                                        \
+        x = NULL;                                                                        \
+    }
 void DestroyConstantEstimates()
 {
     DELETE(g_pCachedEstimate_pi);
@@ -37,11 +41,13 @@ void DestroyConstantEstimates()
 }
 
 static inline int recip(int x)
-{ return 0*x; }
+{
+    return 0 * x;
+}
 
 // pow
 // use pow(a, 2*p) == pow(a*a, p)
-template <class T>
+template<class T>
 T pow(T arg, i32 pwr)
 {
     if (pwr < 0) {
@@ -51,7 +57,8 @@ T pow(T arg, i32 pwr)
     T acc(1);
 
     while (pwr) {
-        if (pwr & 1) acc *= arg;
+        if (pwr & 1)
+            acc *= arg;
         pwr >>= 1;
         arg = sq(arg);
     }
@@ -59,13 +66,12 @@ T pow(T arg, i32 pwr)
     return acc;
 }
 
-Estimate PerformNewton(Estimate arg, NewtonIterator iter, 
-                       Estimate est, i32 prec)
+Estimate PerformNewton(Estimate arg, NewtonIterator iter, Estimate est, i32 prec)
 {
     i32 targetprec = arg.GetPrecision() * 32 - 64;
     while (prec < targetprec) {
-        arg.SetPrecision( (prec)/32 +2);
-        est.SetPrecision( (prec)/32 +2);
+        arg.SetPrecision((prec) / 32 + 2);
+        est.SetPrecision((prec) / 32 + 2);
         est.SetError(0.0);
 
         iter(arg, est, prec);
@@ -80,7 +86,7 @@ Estimate PerformNewton(Estimate arg, NewtonIterator iter,
 
     iter(arg, est, prec);
 
-    return est;//.AddError(old - est);
+    return est; //.AddError(old - est);
 }
 
 void NewtonRSQRT(const Estimate &arg, Estimate &est, i32 &prec)
@@ -92,7 +98,8 @@ void NewtonRSQRT(const Estimate &arg, Estimate &est, i32 &prec)
 Estimate rsqrt(const Estimate &a)
 {
     Estimate arg(a);
-    if (arg.IsNegative()) throw DomainException("rsqrt");
+    if (arg.IsNegative())
+        throw DomainException("rsqrt");
 
     if (!arg.IsPositive())
         throw PrecisionException("rsqrt");
@@ -100,12 +107,14 @@ Estimate rsqrt(const Estimate &a)
     Estimate ei;
     {
         i32 exp = arg.weak_normalize();
-        if (exp & 1) { exp--; }
-        double d = 1.0 / ::sqrt((arg>>exp).weak_AsDouble());
+        if (exp & 1) {
+            exp--;
+        }
+        double d = 1.0 / ::sqrt((arg >> exp).weak_AsDouble());
         ei = Estimate(d) >> (exp / 2);
     }
 
-    Estimate res(PerformNewton(arg/2, NewtonRSQRT, ei, 45 * 2 - 3));
+    Estimate res(PerformNewton(arg / 2, NewtonRSQRT, ei, 45 * 2 - 3));
 
     return res;
 
@@ -124,12 +133,14 @@ Estimate sqrt(const Estimate &a)
     Estimate ei;
     {
         i32 exp = arg.weak_normalize();
-        if (exp & 1) { exp--; }
-        double d = 1.0 / ::sqrt((arg>>exp).weak_AsDouble());
+        if (exp & 1) {
+            exp--;
+        }
+        double d = 1.0 / ::sqrt((arg >> exp).weak_AsDouble());
         ei = Estimate(d) >> (exp / 2);
     }
 
-    Estimate res(arg * PerformNewton(arg/2, NewtonRSQRT, ei, 45 * 2 - 3));
+    Estimate res(arg * PerformNewton(arg / 2, NewtonRSQRT, ei, 45 * 2 - 3));
 
     return res;
 
@@ -140,10 +151,10 @@ Estimate sqrt(const Estimate &a)
         return res.SetError(res);
 }
 
-void PowerSeriesDirect(const Estimate &arg, SeriesIterator iter,
-                       Estimate &sum, Estimate &workspace, i32 indexstart, i32 indexend)
+void PowerSeriesDirect(const Estimate &arg, SeriesIterator iter, Estimate &sum,
+                       Estimate &workspace, i32 indexstart, i32 indexend)
 {
-    for (int i=indexstart; i<indexend; ++i)
+    for (int i = indexstart; i < indexend; ++i)
         sum += iter(arg, workspace, i);
 
     sum.AddError(workspace);
@@ -151,13 +162,17 @@ void PowerSeriesDirect(const Estimate &arg, SeriesIterator iter,
 
 Estimate abs(const Estimate &arg)
 {
-    if (arg.IsPositive()) return arg;
-    if (arg.IsNegative()) return -arg;
+    if (arg.IsPositive())
+        return arg;
+    if (arg.IsNegative())
+        return -arg;
     Estimate a;
-    if (arg.weak_IsPositive()) a = arg;
-    else a = -arg;
-    a = a+a.GetError();
-    return (a/2).SetError(a/2);
+    if (arg.weak_IsPositive())
+        a = arg;
+    else
+        a = -arg;
+    a = a + a.GetError();
+    return (a / 2).SetError(a / 2);
 }
 
 // exponent by McLauren expansion
@@ -169,7 +184,7 @@ Estimate IteratorEXP(const Estimate &arg, Estimate &workspace, i32 index)
 // for the primary interval [-1;1]
 Estimate exp_primary(const Estimate &arg)
 {
-    i32 i = i32(ceil(::pow(double(arg.GetPrecision()*32), 1./2.)));
+    i32 i = i32(ceil(::pow(double(arg.GetPrecision() * 32), 1. / 2.)));
     Estimate x(arg >> i);
 
     Estimate sum(x + 1.0);
@@ -179,7 +194,7 @@ Estimate exp_primary(const Estimate &arg)
 
     PowerSeriesDirect(x, IteratorEXP, sum, workspace, 2, indexend);
 
-    for (i32 k=0;k<i;++k)
+    for (i32 k = 0; k < i; ++k)
         sum *= sum;
     return sum;
 }
@@ -199,7 +214,7 @@ Estimate log_primary(const Estimate &arg)
     return PerformNewton(arg, NewtonLN, Estimate(d), 50 * 2 - 2);
 }
 
-template <>
+template<>
 Estimate ln2<Estimate>(unsigned int prec)
 {
     if (g_pCachedEstimate_ln2 && g_pCachedEstimate_ln2->GetPrecision() >= prec)
@@ -210,8 +225,10 @@ Estimate ln2<Estimate>(unsigned int prec)
 
     v = log_primary(v);
 
-    if (g_pCachedEstimate_ln2) *g_pCachedEstimate_ln2 = v;
-    else g_pCachedEstimate_ln2 = new Estimate(v);
+    if (g_pCachedEstimate_ln2)
+        *g_pCachedEstimate_ln2 = v;
+    else
+        g_pCachedEstimate_ln2 = new Estimate(v);
 
     return v;
 }
@@ -220,12 +237,12 @@ Estimate exp(const Estimate &arg)
 {
     Estimate l(ln2<Estimate>(arg.GetPrecision()));
     Estimate x(arg / l);
-    Estimate de(arg - x*l);
+    Estimate de(arg - x * l);
 
     Estimate e(x.weak_round());
     // domainerror?
 
-    x = (x-e) * l;
+    x = (x - e) * l;
 
     Estimate y(exp_primary(x));
     return y << i32(e.weak_AsDouble());
@@ -233,8 +250,10 @@ Estimate exp(const Estimate &arg)
 
 Estimate log(const Estimate &arg)
 {
-    if (arg.IsNegative()) throw DomainException("log");
-    if (!arg.IsPositive()) throw PrecisionException("log");
+    if (arg.IsNegative())
+        throw DomainException("log");
+    if (!arg.IsPositive())
+        throw PrecisionException("log");
 
     Estimate l(ln2<Estimate>(arg.GetPrecision()));
     Estimate x(arg);
@@ -259,7 +278,7 @@ Estimate rpi(unsigned int prec)
     alpha = sq(sq(y + one)) * alpha - 8 * y * (sq(y) + y + one);
 
     // OBS! This would not work if precision is greater that I32_MAX/128
-    for (u32 i = 32; i < prec*128; i = i*4) {
+    for (u32 i = 32; i < prec * 128; i = i * 4) {
         z = sqrt(sqrt(one - sq(sq(y))));
         y = (one - z) / (one + z);
         oa = alpha;
@@ -269,17 +288,19 @@ Estimate rpi(unsigned int prec)
     return alpha.AddError(alpha - oa);
 }
 
-template <>
+template<>
 Estimate pi(unsigned int prec)
-{ 
+{
     if (g_pCachedEstimate_pi && g_pCachedEstimate_pi->GetPrecision() >= prec)
         return *g_pCachedEstimate_pi;
     prec = g_WorkingPrecision;
 
     Estimate v = recip(rpi(prec));
 
-    if (g_pCachedEstimate_pi) *g_pCachedEstimate_pi = v;
-    else g_pCachedEstimate_pi = new Estimate(v);
+    if (g_pCachedEstimate_pi)
+        *g_pCachedEstimate_pi = v;
+    else
+        g_pCachedEstimate_pi = new Estimate(v);
 
     return v;
 }
@@ -288,9 +309,9 @@ Estimate pi(unsigned int prec)
 Estimate IteratorSIN(const Estimate &arg, Estimate &workspace, i32 index)
 {
     if (index < 30000)
-        return workspace = workspace * arg / (2*index * (2*index+1));
+        return workspace = workspace * arg / (2 * index * (2 * index + 1));
     else
-        return workspace = workspace * arg / (2*index) / (2*index+1);
+        return workspace = workspace * arg / (2 * index) / (2 * index + 1);
 }
 
 // for the primary interval [-pi/2;pi/2]
@@ -300,34 +321,36 @@ Estimate sin_primary(const Estimate &arg)
     // this means about 20.1897521 reductions per 32-bit word
     // additionally, 3^20 fits in u32, but not in i32, so use 3^19
     // for the division factor (1162261467)
-    i32 i = i32(ceil(::pow(double(arg.GetPrecision())*20.2, 1./2.)))/2;
+    i32 i = i32(ceil(::pow(double(arg.GetPrecision()) * 20.2, 1. / 2.))) / 2;
     i32 j = i % 19;
     Estimate x(arg / pow(3, j));
-    for (;j<i;j+=19)
+    for (; j < i; j += 19)
         x /= 1162261467;
 
     Estimate sum(x);
     Estimate workspace(x);
 
-    i32 indexend = i*2;
+    i32 indexend = i * 2;
 
-    PowerSeriesDirect(-x*x, IteratorSIN, sum, workspace, 1, indexend);
+    PowerSeriesDirect(-x * x, IteratorSIN, sum, workspace, 1, indexend);
 
     Estimate three(3);
-    for (i32 k=0;k<i;++k)
-        sum = sum * (three - 4*sum*sum);
+    for (i32 k = 0; k < i; ++k)
+        sum = sum * (three - 4 * sum * sum);
     return sum;
 }
 
 Estimate sin(const Estimate &arg)
 {
-    Estimate pi2(pi<Estimate>(arg.GetPrecision())*2);
+    Estimate pi2(pi<Estimate>(arg.GetPrecision()) * 2);
     Estimate x(arg / pi2);
     x -= x.weak_round();
-    if (!(x<0.6125) || !(x>-0.6125))
+    if (!(x < 0.6125) || !(x > -0.6125))
         throw PrecisionException("sin"); // alternatively, we could just return [-1, 1]
-    if (x.weak_gt(0.25)) x = 0.5 - x;
-    else if (x.weak_lt(-0.25)) x = -0.5 - x;
+    if (x.weak_gt(0.25))
+        x = 0.5 - x;
+    else if (x.weak_lt(-0.25))
+        x = -0.5 - x;
 
     return sin_primary(x * pi2);
 }
@@ -364,13 +387,13 @@ Estimate asin(const Estimate &arg)
     // we still have a problem with the rsqrt if arg is close to one.
     // in this case, use the cos-sin identities
     if (x.weak_gt(0.708))
-        return pi<Estimate>(arg.GetPrecision())/2 - asin_primary(cosfromsin(x));
+        return pi<Estimate>(arg.GetPrecision()) / 2 - asin_primary(cosfromsin(x));
     if (x.weak_lt(-0.708))
-        return pi<Estimate>(arg.GetPrecision())/-2 + asin_primary(cosfromsin(x));
+        return pi<Estimate>(arg.GetPrecision()) / -2 + asin_primary(cosfromsin(x));
     return asin_primary(x);
 }
 
-template <class Estimate>
+template<class Estimate>
 Estimate atan2(const Estimate &y, const Estimate &x)
 {
     // this is atan with result over the full range depending on the signs of both arguments
@@ -381,27 +404,30 @@ Estimate atan2(const Estimate &y, const Estimate &x)
     Estimate tpi(pi<Estimate>(x.GetPrecision()));
 
     if (x.IsPositive()) {
-        return atan(y/x);
+        return atan(y / x);
     } else if (x.IsNegative()) {
-        if (y.IsPositive()) return tpi - atan(y/-x);
-        else return -tpi - atan(y/-x);
+        if (y.IsPositive())
+            return tpi - atan(y / -x);
+        else
+            return -tpi - atan(y / -x);
     } else { // x cannot be distinguished from zero, but this does not stop us to give
         // estimates for the angle based on y and x's possible values
-        if (y.IsPositive()) return (tpi/2).AddError(y/(2*x.GetError()));
-        else if (y.IsNegative()) return (tpi/-2).AddError(y/(2*x.GetError()));
-        else return Estimate().SetError(tpi);
+        if (y.IsPositive())
+            return (tpi / 2).AddError(y / (2 * x.GetError()));
+        else if (y.IsNegative())
+            return (tpi / -2).AddError(y / (2 * x.GetError()));
+        else
+            return Estimate().SetError(tpi);
     }
 }
 
-template
-Estimate atan2(const Estimate &y, const Estimate &x);
+template Estimate atan2(const Estimate &y, const Estimate &x);
 
-template
-MachineEstimate atan2(const MachineEstimate &y, const MachineEstimate &x);
+template MachineEstimate atan2(const MachineEstimate &y, const MachineEstimate &x);
 
 Estimate tan(const Estimate &arg)
-{ 
-    Estimate pi2(pi<Estimate>(arg.GetPrecision())*2);
+{
+    Estimate pi2(pi<Estimate>(arg.GetPrecision()) * 2);
     Estimate x(arg / pi2);
     x -= x.weak_round();
     bool negc = false;
@@ -414,13 +440,15 @@ Estimate tan(const Estimate &arg)
         x = -0.5 - x;
         negc = true;
     } else {
-        if (!(x > -0.25)) throw PrecisionException("tan");
+        if (!(x > -0.25))
+            throw PrecisionException("tan");
     }
 
     Estimate s(sin_primary(x * pi2));
-    if (negc) return -s/cosfromsin(s);
-    else return s/cosfromsin(s);
-
+    if (negc)
+        return -s / cosfromsin(s);
+    else
+        return s / cosfromsin(s);
 }
 
 /*

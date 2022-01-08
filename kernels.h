@@ -21,7 +21,8 @@
 
 #include "defs.h"
 
-namespace RealLib {
+namespace RealLib
+{
 
 // helper functions on mantissas
 // they modify new mantissas
@@ -37,21 +38,23 @@ void FinalizeKernels();
 u32 NormalizeMantissa(u32 *man);
 // perform the actual addition
 // returns true if there is carry
-bool AddMantissa(u32 *man,          // destination, pre-initialized by a call to the default constructor
-                 const u32 *full,   // the greater value
-                 const u32 *part,   // the partial value,
-                 i32 start);            // which is shifted by this many words
+bool AddMantissa(
+  u32 *man,        // destination, pre-initialized by a call to the default constructor
+  const u32 *full, // the greater value
+  const u32 *part, // the partial value,
+  i32 start);      // which is shifted by this many words
 // adjust for calculations that don't fit the preallocated space.
 // an extra pass might be needed if the leftover word introduces more carry.
 // returns number of shifts done
-u32  AdjustForCarry(u32 *man, 
-                    u32 msw);           // most significant word, the one that doesn't fit in
+u32 AdjustForCarry(u32 *man,
+                   u32 msw); // most significant word, the one that doesn't fit in
 // perform the actual substraction
 // returns true if part was greater and the result must be negated
-bool SubMantissa(u32 *man,          // destination, pre-initialized by a call to the default constructor
-                 const u32 *full,   // the greater value
-                 const u32 *part,   // the partial value,
-                 i32 start);                // which is shifted by this many words
+bool SubMantissa(
+  u32 *man,        // destination, pre-initialized by a call to the default constructor
+  const u32 *full, // the greater value
+  const u32 *part, // the partial value,
+  i32 start);      // which is shifted by this many words
 // negate a mantissa. needed if SubMantissa returned true
 void NegMantissa(u32 *man);
 // MulMantissa
@@ -62,44 +65,29 @@ void NegMantissa(u32 *man);
 // inputlen tells how many words should actually be multiplied
 // inputstart is usually (precision - inputlen), where the multiplication
 //    should start
-u32 MulMantissa(u32 *man, 
-                const u32 *a,
-                const u32 *b,
-                i32 inputstart,
-                i32 inputlen);
-// returns whether the kernels would use convolution on this inputlen                
-bool MultipliedByConvolution(i32 inputlen);                
+u32 MulMantissa(u32 *man, const u32 *a, const u32 *b, i32 inputstart, i32 inputlen);
+// returns whether the kernels would use convolution on this inputlen
+bool MultipliedByConvolution(i32 inputlen);
 // DivMantissa
 // perform division. Returns the exponent offset.
-// inputstart and inputlen as before, but division needs a temporary 
+// inputstart and inputlen as before, but division needs a temporary
 // mantissa to work on.
 // can be inplace in a.
-// The LongFloat implementation would only call DivMantissa 
+// The LongFloat implementation would only call DivMantissa
 // if MultipliedByConvolution returns false.
 // Otherwise it will use Newton iterations.
-i32 DivMantissa(u32 *man,
-                const u32 *a,
-                const u32 *b,
-                i32 inputstart,
-                i32 inputlen,
-                u32 *temp1,
-                u32 *temp2);
+i32 DivMantissa(u32 *man, const u32 *a, const u32 *b, i32 inputstart, i32 inputlen,
+                u32 *temp1, u32 *temp2);
 
 // scale mantissa: multiplication by u32 multiplier
 // implemented for performance. returns carry
-u32 ScaleMantissa(u32 *man,
-                  const u32 *src,
-                  u32 multiplier);
+u32 ScaleMantissa(u32 *man, const u32 *src, u32 multiplier);
 // inverse scaling: division by u32 divisor
 // returns exponent offset
-i32 InvScaleMantissa(u32 *man,
-                     const u32 *src,
-                     u32 divisor);
+i32 InvScaleMantissa(u32 *man, const u32 *src, u32 divisor);
 // binary scale mantissa, i.e. multiply by 1<<scale, where scale < 32
-u32 BScaleMantissa(u32 *man,
-                   const u32 *src,
-                   u32 scale);
+u32 BScaleMantissa(u32 *man, const u32 *src, u32 scale);
 
-}   // namespace
+} // namespace
 
-#endif  // file
+#endif // file

@@ -47,7 +47,8 @@
 #include "defs.h"
 #include "limits.h"
 
-namespace RealLib {
+namespace RealLib
+{
 
 // current working precision
 extern i32 g_WorkingPrecision;
@@ -59,23 +60,38 @@ bool InitializeLongFloat(i32 precision, u32 initialbuffersize = 100);
 void FinalizeLongFloat();
 
 #ifndef max
-static inline i32 max(i32 a, i32 b) { return a > b ? a : b; }
-static inline u32 max(u32 a, u32 b) { return a > b ? a : b; }
-static inline i32 min(i32 a, i32 b) { return a < b ? a : b; }
-static inline u32 min(u32 a, u32 b) { return a < b ? a : b; }
+static inline i32 max(i32 a, i32 b)
+{
+    return a > b ? a : b;
+}
+static inline u32 max(u32 a, u32 b)
+{
+    return a > b ? a : b;
+}
+static inline i32 min(i32 a, i32 b)
+{
+    return a < b ? a : b;
+}
+static inline u32 min(u32 a, u32 b)
+{
+    return a < b ? a : b;
+}
 #endif
 
 static inline i32 i32_saturated(i64 a)
-{ a = a < I32_MAX ? a : I32_MAX-1;
-return i32(a > -I32_MAX ? a : -I32_MAX+1); }
+{
+    a = a < I32_MAX ? a : I32_MAX - 1;
+    return i32(a > -I32_MAX ? a : -I32_MAX + 1);
+}
 
 typedef u32 Alloc;
 
-class Mantissa {
-private:
+class Mantissa
+{
+  private:
     Alloc m_pAlloc;
 
-public:
+  public:
     // create a new mantissa, which is referenced exactly once
     Mantissa();
     // copy a mantissa
@@ -85,28 +101,30 @@ public:
     ~Mantissa();
 
     // destruct, then copy
-    void operator = (const Mantissa &rhs);
+    void operator=(const Mantissa &rhs);
 
     // non-const reference to a word for assignment
-    u32& operator [] (i32 index);
+    u32 &operator[](i32 index);
     // const operation, extract value of index-th word
-    u32 operator () (i32 index) const;
+    u32 operator()(i32 index) const;
 
     // non const pointer get
-    u32* getWritablePtr();
+    u32 *getWritablePtr();
     // const pointer get
-    const u32* getConstPtr() const;
+    const u32 *getConstPtr() const;
 };
 
 // LongFloat
 // the representation is little endian
 // (i.e. -1 ^ m_Neg * sum(m_Man[i] * 2^ (32 * (m_Exp - g_WorkingPrecision + i))))
 
-class LongFloat {
-public:
+class LongFloat
+{
+  public:
     // special values
     typedef enum { Normal, Zero, Infinity, Nan } Special;
-private:
+
+  private:
     // mantissa
     Mantissa m_Man;
     // exponent, power of 2^32
@@ -124,9 +142,10 @@ private:
 #endif
 
     // private constructor, directly setting members
-    LongFloat(Special spec, bool neg, const Mantissa &man, exp_type exp, u32 Prec = g_WorkingPrecision);
+    LongFloat(Special spec, bool neg, const Mantissa &man, exp_type exp,
+              u32 Prec = g_WorkingPrecision);
 
-public:
+  public:
     // constructor of special values
     LongFloat(Special spec = Zero, bool neg = false);
     // copy constructor
@@ -135,11 +154,11 @@ public:
     ~LongFloat();
 
     // assignment
-    LongFloat& operator = (const LongFloat &rhs);
+    LongFloat &operator=(const LongFloat &rhs);
 
     // conversions, exact
     LongFloat(const double src);
-    LongFloat(const i32 man, const i32 exp);    // set to man * 2^(32*exp)
+    LongFloat(const i32 man, const i32 exp); // set to man * 2^(32*exp)
     // set to closest representable value
     LongFloat(const char *value);
 
@@ -151,106 +170,88 @@ public:
     // mantissa conversion. Don't care about any other attribute
     LongFloat MantissaAsLongFloat() const;
     double MantissaAsDouble() const;
-    // does not add the leading '.', returns true if the rounding resulted in carry, 
+    // does not add the leading '.', returns true if the rounding resulted in carry,
     // i.e. the mantissa rounds to 1.(0)
-    bool MantissaAsDecimal(char *buffer, u32 buflen) const; 
+    bool MantissaAsDecimal(char *buffer, u32 buflen) const;
 
     LongFloat SignedMantissaAsLongFloat() const;
 
     // attributes retrieval
-    Special Kind() const
-    { return m_Special; }
-    i32 Exponent() const
-    { return m_Exp; }
-    bool IsNegative() const
-    { return m_Neg; }
+    Special Kind() const { return m_Special; }
+    i32 Exponent() const { return m_Exp; }
+    bool IsNegative() const { return m_Neg; }
 
-    i32 GetPrecision() const
-    { return m_Prec; }
+    i32 GetPrecision() const { return m_Prec; }
     void SetPrecision(i32 prec)
-    { m_Prec = prec < g_WorkingPrecision ? prec : g_WorkingPrecision; }
+    {
+        m_Prec = prec < g_WorkingPrecision ? prec : g_WorkingPrecision;
+    }
 
     // at LongFloat level we're directly operating Mantissa words
     // Mantissas can be shared between different LongFloats, thus
     // all operations produce new LongFloats rather than modify existing
 
-    LongFloat operator - () const;
+    LongFloat operator-() const;
 
-    LongFloat operator + (const LongFloat &rhs) const;
-    LongFloat operator - (const LongFloat &rhs) const;
-    LongFloat operator * (const LongFloat &rhs) const;
-    LongFloat operator / (const LongFloat &rhs) const;
+    LongFloat operator+(const LongFloat &rhs) const;
+    LongFloat operator-(const LongFloat &rhs) const;
+    LongFloat operator*(const LongFloat &rhs) const;
+    LongFloat operator/(const LongFloat &rhs) const;
 
     LongFloat recip() const;
 
     // rounding error functions. needed to minimize the
     // dependancies of Estimate to the actual LongFloat
     // implementation
-    // return the index of the first possibly incorrect bit 
+    // return the index of the first possibly incorrect bit
     // (provided the inputs were correct)
-    i32 AdditionRoundingError() const
-    { return -g_WorkingPrecision*32-1; }
-    i32 MultiplicationRoundingError() const
-    { return -GetPrecision()*32-1; }
+    i32 AdditionRoundingError() const { return -g_WorkingPrecision * 32 - 1; }
+    i32 MultiplicationRoundingError() const { return -GetPrecision() * 32 - 1; }
     i32 DivisionRoundingError() const;
     // Newton-Raphson may be complete wrong in the lsw
 
-    bool operator == (const LongFloat &rhs) const; 
-    bool operator >= (const LongFloat &rhs) const; 
+    bool operator==(const LongFloat &rhs) const;
+    bool operator>=(const LongFloat &rhs) const;
 
-    LongFloat operator << (i32 howmuch) const;  // scale binary
+    LongFloat operator<<(i32 howmuch) const; // scale binary
 
     // rounding
     LongFloat RoundTowardZero() const;
-    LongFloat round() const;    // to nearest integer
+    LongFloat round() const; // to nearest integer
 
     // normalization (returns an exponent that would
     // set the mantissa in the range [0.5; 1) )
     i32 normalize() const;
 
     // fast stuff
-    LongFloat operator * (i32 rhs) const;
-    LongFloat operator / (i32 rhs) const;
+    LongFloat operator*(i32 rhs) const;
+    LongFloat operator/(i32 rhs) const;
     LongFloat addProduct(const LongFloat &a, const LongFloat &b) const;
     LongFloat addProduct(const LongFloat &a, i32 b) const;
 
-    LongFloat& AddToExponent(i32 howmuch);
+    LongFloat &AddToExponent(i32 howmuch);
 
     // shorthands; all of these provide no performance benefit
 
-    bool operator != (const LongFloat &rhs) const
-            { return !(*this == rhs); }
-    bool operator <= (const LongFloat &rhs) const
-            { return rhs >= *this; }
-    bool operator < (const LongFloat &rhs) const
-    { return !(*this >= rhs); }
-    bool operator > (const LongFloat &rhs) const
-    { return !(rhs >= *this); }
+    bool operator!=(const LongFloat &rhs) const { return !(*this == rhs); }
+    bool operator<=(const LongFloat &rhs) const { return rhs >= *this; }
+    bool operator<(const LongFloat &rhs) const { return !(*this >= rhs); }
+    bool operator>(const LongFloat &rhs) const { return !(rhs >= *this); }
 
-    LongFloat operator >> (i32 howmuch) const
-    { return *this << (-howmuch); }
-    LongFloat& operator <<= (i32 howmuch)
-            { return *this = *this << (howmuch); }
-    LongFloat& operator >>= (i32 howmuch)
-            { return *this = *this << (-howmuch); }
+    LongFloat operator>>(i32 howmuch) const { return *this << (-howmuch); }
+    LongFloat &operator<<=(i32 howmuch) { return *this = *this << (howmuch); }
+    LongFloat &operator>>=(i32 howmuch) { return *this = *this << (-howmuch); }
 
-    LongFloat& operator += (const LongFloat &rhs) 
-            { return *this = *this + rhs; }
-    LongFloat& operator -= (const LongFloat &rhs)
-            { return *this = *this - rhs; }
-    LongFloat& operator *= (const LongFloat &rhs)
-            { return *this = *this * rhs; }
-    LongFloat& operator /= (const LongFloat &rhs)
-            { return *this = *this / rhs; }
+    LongFloat &operator+=(const LongFloat &rhs) { return *this = *this + rhs; }
+    LongFloat &operator-=(const LongFloat &rhs) { return *this = *this - rhs; }
+    LongFloat &operator*=(const LongFloat &rhs) { return *this = *this * rhs; }
+    LongFloat &operator/=(const LongFloat &rhs) { return *this = *this / rhs; }
 
-    LongFloat& operator *= (i32 rhs)
-            { return *this = *this * rhs; }
-
-
+    LongFloat &operator*=(i32 rhs) { return *this = *this * rhs; }
 };
 
 // C++-style output
-std::ostream& operator <<(std::ostream &os, const LongFloat &lf);
+std::ostream &operator<<(std::ostream &os, const LongFloat &lf);
 
 } // namespace
 

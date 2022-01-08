@@ -30,33 +30,37 @@
 #include "LongFloat.h"
 #include "ErrorEstimate.h"
 
-namespace RealLib {
+namespace RealLib
+{
 
 RealLibException::RealLibException(const char *wht) throw()
 {
     if (wht) {
         strncpy(m_what, wht, 127);
         m_what[127] = 0;
-    } else m_what[0] = 0;
+    } else
+        m_what[0] = 0;
 }
-
 
 // Estimate implementation
 
 Estimate::Estimate(const LongFloat &val, const ErrorEstimate &err)
-: m_Value(val), m_Error(err)
+  : m_Value(val)
+  , m_Error(err)
 {
     CorrectZero();
 }
 
 Estimate::Estimate(double v)
-: m_Value(v), m_Error(ErrorEstimate())
+  : m_Value(v)
+  , m_Error(ErrorEstimate())
 {
     CorrectZero();
 }
 
 Estimate::Estimate(const char *val)
-: m_Value(val), m_Error(RoundingError(m_Value, m_Value.DivisionRoundingError()))
+  : m_Value(val)
+  , m_Error(RoundingError(m_Value, m_Value.DivisionRoundingError()))
 {
     CorrectZero();
 }
@@ -64,15 +68,12 @@ Estimate::Estimate(const char *val)
 void Estimate::CorrectZero()
 {
     if (m_Value.Kind() == LongFloat::Zero)
-        if (m_Error.m_Exp == ErrorEstimate::minusinf) 
-        {
-            m_Error.m_Exp = MINIMUM_EXPONENT+1;
-            m_Error.m_Man = 1u<<30;
+        if (m_Error.m_Exp == ErrorEstimate::minusinf) {
+            m_Error.m_Exp = MINIMUM_EXPONENT + 1;
+            m_Error.m_Man = 1u << 30;
             m_Value = m_Error.AsLongFloat();
-            m_Error.m_Man = 1u<<31;
-        }
-        else
-        {
+            m_Error.m_Man = 1u << 31;
+        } else {
             m_Value = m_Error.AsLongFloat();
             m_Error = m_Error << 1;
         }
@@ -83,14 +84,14 @@ Estimate Estimate::GetError() const
     return Estimate(m_Error.AsLongFloat());
 }
 
-Estimate& Estimate::SetError(const Estimate &err)
+Estimate &Estimate::SetError(const Estimate &err)
 {
     ErrorEstimate ee(err.m_Value);
     m_Error = ee + err.m_Error;
     return *this;
 }
 
-Estimate& Estimate::AddError(const Estimate &err)
+Estimate &Estimate::AddError(const Estimate &err)
 {
     m_Error = m_Error + ErrorEstimate(err.m_Value) + err.m_Error;
     return *this;
@@ -102,17 +103,18 @@ i32 Estimate::GetRelativeError() const
     exp_type ev = weak_normalize();
 
     return i32_saturated(ev - ee - 1);
-
 }
 
 Estimate Estimate::TruncateNegative(const char *origin) const
 {
-    if (IsNegative()) throw DomainException(origin);
+    if (IsNegative())
+        throw DomainException(origin);
 
-    if (IsPositive()) return *this;
+    if (IsPositive())
+        return *this;
 
     // (the theory says
-    // we can't always give the correct DomainException, so we shouldn't try)	
+    // we can't always give the correct DomainException, so we shouldn't try)
 
     // Get an interval centered at half the upper bound, with the same error.
     LongFloat center((m_Value + m_Error.AsLongFloat()) >> 1);
@@ -126,14 +128,15 @@ Estimate Estimate::TruncateNegative(const char *origin) const
 }
 
 // operations
-Estimate operator - (const Estimate &arg)
+Estimate operator-(const Estimate &arg)
 {
     return Estimate(-arg.m_Value, arg.m_Error);
 }
 
 Estimate recip(const Estimate &arg)
 {
-    if (!arg.IsNonZero()) throw PrecisionException("recip");
+    if (!arg.IsNonZero())
+        throw PrecisionException("recip");
 
     LongFloat r(arg.m_Value.recip());
     ErrorEstimate e(arg.m_Value, ErrorEstimate::Down);
@@ -142,57 +145,67 @@ Estimate recip(const Estimate &arg)
     // multiplication in denominator would have the wrong rounding mode
 }
 
-Estimate operator + (const Estimate &lhs, const Estimate &rhs)
+Estimate operator+(const Estimate &lhs, const Estimate &rhs)
 {
     LongFloat s(lhs.m_Value + rhs.m_Value);
-    return Estimate(s, lhs.m_Error + rhs.m_Error + RoundingError(s, s.AdditionRoundingError()));
+    return Estimate(s, lhs.m_Error + rhs.m_Error +
+                         RoundingError(s, s.AdditionRoundingError()));
 }
 
-Estimate operator - (const Estimate &lhs, const Estimate &rhs)
+Estimate operator-(const Estimate &lhs, const Estimate &rhs)
 {
     LongFloat s(lhs.m_Value - rhs.m_Value);
-    return Estimate(s, lhs.m_Error + rhs.m_Error + RoundingError(s, s.AdditionRoundingError()));
+    return Estimate(s, lhs.m_Error + rhs.m_Error +
+                         RoundingError(s, s.AdditionRoundingError()));
 }
 
-Estimate operator * (const Estimate &lhs, const Estimate &rhs)
+Estimate operator*(const Estimate &lhs, const Estimate &rhs)
 {
     LongFloat r(lhs.m_Value * rhs.m_Value);
-    ErrorEstimate e(lhs.m_Error * rhs.m_Error + lhs.m_Error * ErrorEstimate(rhs.m_Value) + rhs.m_Error * ErrorEstimate(lhs.m_Value));
+    ErrorEstimate e(lhs.m_Error * rhs.m_Error + lhs.m_Error * ErrorEstimate(rhs.m_Value) +
+                    rhs.m_Error * ErrorEstimate(lhs.m_Value));
 
     return Estimate(r, e + RoundingError(r, r.MultiplicationRoundingError()));
 }
 
-Estimate operator / (const Estimate &lhs, const Estimate &rhs)
+Estimate operator/(const Estimate &lhs, const Estimate &rhs)
 {
-    if (!rhs.IsNonZero()) throw PrecisionException("division");
+    if (!rhs.IsNonZero())
+        throw PrecisionException("division");
     // this also assures e - rhs.m_Error > 0
 
     LongFloat r(lhs.m_Value / rhs.m_Value);
     ErrorEstimate e(rhs.m_Value, ErrorEstimate::Down);
-    ErrorEstimate n(ErrorEstimate(lhs.m_Value) * rhs.m_Error + ErrorEstimate(rhs.m_Value, ErrorEstimate::Up) * lhs.m_Error);
-    return Estimate(r, n / (e - rhs.m_Error) / e + RoundingError(r, r.DivisionRoundingError()));
+    ErrorEstimate n(ErrorEstimate(lhs.m_Value) * rhs.m_Error +
+                    ErrorEstimate(rhs.m_Value, ErrorEstimate::Up) * lhs.m_Error);
+    return Estimate(r, n / (e - rhs.m_Error) / e +
+                         RoundingError(r, r.DivisionRoundingError()));
     // multiplication in denominator would have the wrong rounding mode
 }
 
-Estimate Estimate::operator << (i32 howmuch) const
+Estimate Estimate::operator<<(i32 howmuch) const
 {
     LongFloat v(m_Value << howmuch);
-    return Estimate(v, (m_Error << howmuch) + RoundingError(v, v.AdditionRoundingError()));
+    return Estimate(v,
+                    (m_Error << howmuch) + RoundingError(v, v.AdditionRoundingError()));
 }
 
-Estimate operator * (const Estimate &lhs, i32 rhs)
+Estimate operator*(const Estimate &lhs, i32 rhs)
 {
     LongFloat r(lhs.m_Value * rhs);
 
-    return Estimate(r, lhs.m_Error * ErrorEstimate(double(rhs)) + RoundingError(r, r.AdditionRoundingError()));
+    return Estimate(r, lhs.m_Error * ErrorEstimate(double(rhs)) +
+                         RoundingError(r, r.AdditionRoundingError()));
 }
 
-Estimate operator / (const Estimate &lhs, i32 rhs)
+Estimate operator/(const Estimate &lhs, i32 rhs)
 {
-    if (rhs == 0) throw DomainException("division by int");
+    if (rhs == 0)
+        throw DomainException("division by int");
     LongFloat r(lhs.m_Value / rhs);
 
-    return Estimate(r, lhs.m_Error / ErrorEstimate(double(rhs)) + RoundingError(r, r.AdditionRoundingError()));
+    return Estimate(r, lhs.m_Error / ErrorEstimate(double(rhs)) +
+                         RoundingError(r, r.AdditionRoundingError()));
 }
 
 bool Estimate::IsPositive() const
@@ -220,12 +233,12 @@ bool Estimate::weak_IsPositive() const
     return m_Value.Kind() == LongFloat::Normal && !m_Value.IsNegative();
 }
 
-bool Estimate::weak_lt(const Estimate& rhs) const
+bool Estimate::weak_lt(const Estimate &rhs) const
 {
     return m_Value < rhs.m_Value;
 }
 
-bool Estimate::weak_eq(const Estimate& rhs) const
+bool Estimate::weak_eq(const Estimate &rhs) const
 {
     return m_Value == rhs.m_Value;
 }
@@ -308,4 +321,4 @@ char* Estimate::AsDecimal(char *bufptr, u32 buflen)
 }
  */
 
-}	// namespace
+} // namespace
