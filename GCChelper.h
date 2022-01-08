@@ -51,7 +51,7 @@ static inline bool __isinf(const double x)
 
 static inline bool _finite(const double x)
 {
-    return finite(x);
+    return isfinite(x);
 }
 
 static inline int _fpclass(const double x)

@@ -1,5 +1,7 @@
 CXX = g++
-CXXFLAGS := -O3 
+CXXFLAGS := -O3
+
+USE_SSE := 0
 
 ifeq ($(USE_SSE),1)
   CXXFLAGS := $(CXXFLAGS) -msse2
@@ -15,7 +17,7 @@ OBJECTS = convolution.o kernels.o DataManager.o LongFloat.o ErrorEstimate.o \
 all: Real.a makeexamples makemanual
 
 Real.a: $(OBJECTS)
-	ar -rvs Real.a $(OBJECTS)
+	libtool -static -o Real.a $(OBJECTS)
 
 MachineEstimate.h: MachineEstimateMul.h MachineEstimateSSE2.h
 	if test "$(USE_SSE)" = "1"; then MACHEST=MachineEstimateSSE2; \
@@ -29,14 +31,14 @@ MachineEstimate.cpp: MachineEstimate.h MachineEstimateMul.cpp \
 		else MACHEST=MachineEstimateMul; \
 	fi; \
 	cp $$MACHEST.cpp MachineEstimate.cpp
-	
+
 makeexamples:
 	cd examples; $(MAKE) $(FLAGS_TO_PASS)
-	
+
 makemanual:
 	cd manual; $(MAKE) $(FLAGS_TO_PASS)
-	
-clean: 
+
+clean:
 	cd examples; $(MAKE) clean
 	cd manual; $(MAKE) clean
 	rm -f *.o *.a

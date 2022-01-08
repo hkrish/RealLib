@@ -1,0 +1,9 @@
+Real.a
+*.o
+*.out
+MachineEstimate.cpp
+MachineEstimate.h
+compile_commands.json
+/.cache
+res.txt
+pi.txt

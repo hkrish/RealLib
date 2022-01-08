@@ -42,9 +42,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <assert.h>
-#include <malloc.h>
 #include <exception>
 #include "defs.h"
+// #include <malloc.h>
 #include "LongFloat.h"
 #include "RealEstimate.h"
 #include "MachineEstimate.h"
