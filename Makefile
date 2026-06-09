@@ -1,4 +1,4 @@
-CXX = g++
+CXX = clang++
 CXXFLAGS := -O3
 
 USE_SSE := 0

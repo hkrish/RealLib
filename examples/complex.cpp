@@ -12,7 +12,7 @@ using namespace RealLib;
 using namespace std;
 
 template<class T>
-ostream &operator<<(ostream &os, const complex<T> &c)
+ostream &operator<<(ostream &os, const RealLib::complex<T> &c)
 {
     return os << '(' << c.real() << ", " << c.imag() << ')';
 }
@@ -22,8 +22,8 @@ int main()
     InitializeRealLib();
 
     {
-        complex<Real> a(cos(Pi / (3 * 3)), sin(Pi / (3 * 3)));
-        complex<Real> c(1);
+        RealLib::complex<Real> a(cos(Pi / (3 * 3)), sin(Pi / (3 * 3)));
+        RealLib::complex<Real> c(1);
 
         for (int i = 0; i < 54; ++i)
             c = c * a;
